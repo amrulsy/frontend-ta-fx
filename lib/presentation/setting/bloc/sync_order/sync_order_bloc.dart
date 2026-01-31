@@ -40,32 +40,5 @@ class SyncOrderBloc extends Bloc<SyncOrderEvent, SyncOrderState> {
 
       emit(const SyncOrderState.success());
     });
-
-    on<_SendOrderForCloseChasier>((event, emit) async {
-      emit(const SyncOrderState.loading());
-
-      final ordersIsSyncZero =
-          await ProductLocalDatasource.instance.getOrderByIsSync();
-
-      for (final order in ordersIsSyncZero) {
-        final orderItems = await ProductLocalDatasource.instance
-            .getOrderItemByOrderIdLocal(order.id!);
-
-        final orderRequest = OrderRequestModel(
-            transactionTime: order.transactionTime,
-            totalItem: order.totalQuantity,
-            totalPrice: order.totalPrice,
-            kasirId: order.idKasir,
-            paymentMethod: order.paymentMethod,
-            orderItems: orderItems);
-        final response = await orderRemoteDatasource.sendOrder(orderRequest);
-        if (response) {
-          await ProductLocalDatasource.instance
-              .updateIsSyncOrderById(order.id!);
-        }
-      }
-
-      emit(const SyncOrderState.successCloseChasier());
-    });
   }
 }

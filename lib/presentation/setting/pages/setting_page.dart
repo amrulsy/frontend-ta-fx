@@ -6,10 +6,8 @@ import 'package:project_ta/data/datasources/auth_local_datasource.dart';
 import 'package:project_ta/data/models/response/auth_response_model.dart';
 import 'package:project_ta/presentation/auth/pages/login_page.dart';
 import 'package:project_ta/presentation/home/pages/dashboard_page.dart';
-import 'package:project_ta/presentation/setting/bloc/report/close_cashier/close_cashier_bloc.dart';
 import 'package:project_ta/presentation/setting/pages/manage_printer_page.dart';
 import 'package:project_ta/presentation/setting/pages/report/report_page.dart';
-import 'package:project_ta/presentation/setting/pages/save_server_key_page.dart';
 import 'package:project_ta/presentation/setting/pages/sync_data_page.dart';
 import 'package:project_ta/presentation/user_management/pages/user_list_page.dart';
 
@@ -17,7 +15,6 @@ import '../../../core/assets/assets.gen.dart';
 import '../../../core/components/menu_button.dart';
 import '../../../core/components/spaces.dart';
 import '../../home/bloc/logout/logout_bloc.dart';
-import '../bloc/sync_order/sync_order_bloc.dart';
 import 'manage_product_page.dart';
 
 class SettingPage extends StatefulWidget {

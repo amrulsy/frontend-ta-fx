@@ -146,7 +146,6 @@ class _ProductListPageState extends State<ProductListPage> {
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.network(
-                                product.imageUrl ??
                                     '${Variables.baseUrl}/storage/products/${product.image}',
                                 width: 50,
                                 height: 50,

@@ -46,7 +46,7 @@ dependencies:
   open_filex: ^4.7.0
   pdf: ^3.11.1
   permission_handler: ^11.3.1
-  print_bluetooth_thermal: ^1.1.6
+  print_bluetooth_thermal: ^1.1.9
   shared_preferences: ^2.2.2
   sqflite: ^2.3.0
   widgets_to_image: ^1.0.0
