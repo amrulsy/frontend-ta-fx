@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project_ta/core/utils/connectivity_helper.dart';
 import 'package:project_ta/data/datasources/user_remote_datasource.dart';
 import 'package:project_ta/data/models/response/user_response_model.dart';
 import 'package:project_ta/presentation/user_management/pages/user_form_page.dart';
@@ -14,6 +15,7 @@ class _UserListPageState extends State<UserListPage> {
   List<UserData> users = [];
   bool isLoading = true;
   String? errorMessage;
+  bool isOffline = false;
 
   @override
   void initState() {
@@ -25,7 +27,18 @@ class _UserListPageState extends State<UserListPage> {
     setState(() {
       isLoading = true;
       errorMessage = null;
+      isOffline = false;
     });
+
+    // Check connectivity first
+    final isConnected = await ConnectivityHelper().isConnected();
+    if (!isConnected) {
+      setState(() {
+        isOffline = true;
+        isLoading = false;
+      });
+      return;
+    }
 
     try {
       final result = await UserRemoteDatasource().getUsers();
@@ -76,21 +89,21 @@ class _UserListPageState extends State<UserListPage> {
         final result = await UserRemoteDatasource().deleteUser(userId);
         result.fold(
           (error) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error: $error')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('Error: $error')));
           },
           (response) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(response.message)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(response.message)));
             _loadUsers(); // Reload the list
           },
         );
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -119,136 +132,184 @@ class _UserListPageState extends State<UserListPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadUsers,
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadUsers),
         ],
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Error: $errorMessage'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadUsers,
-                        child: const Text('Retry'),
-                      ),
-                    ],
+          : isOffline
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.wifi_off, size: 80, color: Colors.orange),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'No Internet Connection',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                )
-              : users.isEmpty
-                  ? const Center(child: Text('No users found'))
-                  : RefreshIndicator(
-                      onRefresh: _loadUsers,
-                      child: ListView.builder(
-                        itemCount: users.length,
-                        itemBuilder: (context, index) {
-                          final user = users[index];
-                          return Card(
-                            margin: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: _getRoleColor(user.roles),
-                                child: Text(
-                                  user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              title: Text(user.name),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Email: ${user.email}'),
-                                  if (user.phone != null && user.phone!.isNotEmpty)
-                                    Text('Phone: ${user.phone}'),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: _getRoleColor(user.roles),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      user.roles.toUpperCase(),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              trailing: PopupMenuButton<String>(
-                                onSelected: (value) {
-                                  switch (value) {
-                                    case 'edit':
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              UserFormPage(user: user),
-                                        ),
-                                      ).then((_) => _loadUsers());
-                                      break;
-                                    case 'delete':
-                                      _deleteUser(user.id);
-                                      break;
-                                  }
-                                },
-                                itemBuilder: (context) => [
-                                  const PopupMenuItem(
-                                    value: 'edit',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.edit),
-                                        SizedBox(width: 8),
-                                        Text('Edit'),
-                                      ],
-                                    ),
-                                  ),
-                                  const PopupMenuItem(
-                                    value: 'delete',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.delete, color: Colors.red),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Delete',
-                                          style: TextStyle(color: Colors.red),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+                  const SizedBox(height: 12),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 32),
+                    child: Text(
+                      'Please connect to the internet to access user management.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: _loadUsers,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Try Again'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
                       ),
                     ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const UserFormPage()),
-          ).then((_) => _loadUsers());
-        },
-        child: const Icon(Icons.add),
-      ),
+                  ),
+                ],
+              ),
+            )
+          : errorMessage != null
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Error: $errorMessage'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadUsers,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            )
+          : users.isEmpty
+          ? const Center(child: Text('No users found'))
+          : RefreshIndicator(
+              onRefresh: _loadUsers,
+              child: ListView.builder(
+                itemCount: users.length,
+                itemBuilder: (context, index) {
+                  final user = users[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: _getRoleColor(user.roles),
+                        child: Text(
+                          user.name.isNotEmpty
+                              ? user.name[0].toUpperCase()
+                              : 'U',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      title: Text(user.name),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Email: ${user.email}'),
+                          if (user.phone != null && user.phone!.isNotEmpty)
+                            Text('Phone: ${user.phone}'),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getRoleColor(user.roles),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              user.roles.toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) {
+                          switch (value) {
+                            case 'edit':
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      UserFormPage(user: user),
+                                ),
+                              ).then((_) => _loadUsers());
+                              break;
+                            case 'delete':
+                              _deleteUser(user.id);
+                              break;
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit),
+                                SizedBox(width: 8),
+                                Text('Edit'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete, color: Colors.red),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Delete',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+      floatingActionButton: !isOffline
+          ? FloatingActionButton(
+              onPressed: () async {
+                // Check connectivity before navigating
+                final isConnected = await ConnectivityHelper().isConnected();
+                if (!isConnected) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('No internet connection'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                  return;
+                }
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const UserFormPage()),
+                ).then((_) => _loadUsers());
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project_ta/core/utils/connectivity_helper.dart';
 import 'package:project_ta/data/datasources/product_remote_datasource.dart';
 import 'package:project_ta/data/models/response/product_response_model.dart';
 import 'package:project_ta/core/constants/variables.dart';
@@ -17,6 +18,7 @@ class _ProductListPageState extends State<ProductListPage> {
   List<Product> products = [];
   bool isLoading = true;
   String? errorMessage;
+  bool isOffline = false;
 
   @override
   void initState() {
@@ -28,7 +30,18 @@ class _ProductListPageState extends State<ProductListPage> {
     setState(() {
       isLoading = true;
       errorMessage = null;
+      isOffline = false;
     });
+
+    // Check connectivity first
+    final isConnected = await ConnectivityHelper().isConnected();
+    if (!isConnected) {
+      setState(() {
+        isOffline = true;
+        isLoading = false;
+      });
+      return;
+    }
 
     try {
       final result = await ProductRemoteDatasource().getProducts();
@@ -114,6 +127,41 @@ class _ProductListPageState extends State<ProductListPage> {
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
+          : isOffline
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.wifi_off, size: 80, color: Colors.orange),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'No Internet Connection',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 32),
+                    child: Text(
+                      'Please connect to the internet to access product management.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: _loadProducts,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Try Again'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
           : errorMessage != null
           ? Center(
               child: Column(
@@ -146,7 +194,7 @@ class _ProductListPageState extends State<ProductListPage> {
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.network(
-                                    '${Variables.baseUrl}/storage/products/${product.image}',
+                                '${Variables.baseUrl}/storage/products/${product.image}',
                                 width: 50,
                                 height: 50,
                                 fit: BoxFit.cover,
@@ -244,15 +292,31 @@ class _ProductListPageState extends State<ProductListPage> {
                 },
               ),
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ProductFormPage()),
-          ).then((_) => _loadProducts());
-        },
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: !isOffline
+          ? FloatingActionButton(
+              onPressed: () async {
+                // Check connectivity before navigating
+                final isConnected = await ConnectivityHelper().isConnected();
+                if (!isConnected) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('No internet connection'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                  return;
+                }
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProductFormPage(),
+                  ),
+                ).then((_) => _loadProducts());
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }

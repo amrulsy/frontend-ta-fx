@@ -8,6 +8,7 @@ import 'package:project_ta/core/constants/colors.dart';
 import 'package:project_ta/core/extensions/build_context_ext.dart';
 import 'package:project_ta/core/extensions/int_ext.dart';
 import 'package:project_ta/core/extensions/string_ext.dart';
+import 'package:project_ta/core/utils/connectivity_helper.dart';
 import 'package:project_ta/data/models/response/summary_response_model.dart';
 import 'package:project_ta/presentation/setting/bloc/report/product_sales/product_sales_bloc.dart';
 import 'package:project_ta/presentation/setting/bloc/report/summary/summary_bloc.dart';
@@ -33,10 +34,27 @@ class _ReportPageState extends State<ReportPage> {
   List<ProductSales> productSales = [];
   List<ProductSales> sortedProductSales = []; // For displaying sorted data
   Summary? summary;
+  bool isOffline = false;
 
   @override
   void initState() {
     super.initState();
+    _checkConnectivityAndLoadData();
+  }
+
+  Future<void> _checkConnectivityAndLoadData() async {
+    final isConnected = await ConnectivityHelper().isConnected();
+    if (!isConnected) {
+      setState(() {
+        isOffline = true;
+      });
+      return;
+    }
+
+    setState(() {
+      isOffline = false;
+    });
+
     String startDate = DateFormat('yyyy-MM-dd').format(selectedStartDate);
     String endDate = DateFormat('yyyy-MM-dd').format(selectedEndDate);
     context.read<SummaryBloc>().add(
@@ -160,477 +178,565 @@ class _ReportPageState extends State<ReportPage> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: isOffline
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        selectedStartDate == null
-                            ? ''
-                            : DateFormat(
-                                'dd MMM yyyy',
-                              ).format(selectedStartDate),
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 12.0,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => _selectStartDate(context),
-                        icon: const Icon(
-                          Icons.calendar_month,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
+                  const Icon(Icons.wifi_off, size: 80, color: Colors.orange),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'No Internet Connection',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  Row(
-                    children: [
-                      Text(
-                        selectedEndDate == null
-                            ? ''
-                            : DateFormat('dd MMM yyyy').format(selectedEndDate),
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 12.0,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => _selectEndDate(context),
-                        icon: const Icon(
-                          Icons.calendar_month,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 12),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 32),
+                    child: Text(
+                      'Please connect to the internet to load report data.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey),
+                    ),
                   ),
-                  const SpaceWidth(4),
-                  Expanded(
-                    child: Button.filled(
-                      onPressed: () {
-                        String startDate = DateFormat(
-                          'yyyy-MM-dd',
-                        ).format(selectedStartDate);
-                        String endDate = DateFormat(
-                          'yyyy-MM-dd',
-                        ).format(selectedEndDate);
-                        context.read<SummaryBloc>().add(
-                          SummaryEvent.getSummary(startDate, endDate),
-                        );
-                        context.read<ProductSalesBloc>().add(
-                          ProductSalesEvent.getProductSales(startDate, endDate),
-                        );
-                      },
-                      label: "Filter",
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: _checkConnectivityAndLoadData,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Try Again'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SpaceHeight(16.0),
-              Container(
-                width: MediaQuery.of(context).size.width,
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: AppColors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.card.withOpacity(0.5),
-                      spreadRadius: 5,
-                      blurRadius: 7,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    const Text(
-                      'Summary Report',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SpaceHeight(16.0),
-                    BlocBuilder<SummaryBloc, SummaryState>(
-                      builder: (context, state) {
-                        return state.maybeWhen(
-                          orElse: () {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          },
-                          success: (data) {
-                            summary = data.data;
-                            return Column(
-                              children: [
-                                buildPrice(
-                                  'Total Revenue',
-                                  data.data.totalRevenue.toString(),
-                                ),
-                                const SpaceHeight(8),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      "Sold Items",
-                                      style: TextStyle(
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                    Text(
-                                      "${data.data.totalSoldQuantity} items",
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SpaceHeight(16),
-              Container(
-                width: MediaQuery.of(context).size.width,
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: AppColors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.card.withOpacity(0.5),
-                      spreadRadius: 5,
-                      blurRadius: 7,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
+            )
+          : Padding(
+              padding: const EdgeInsets.all(16),
+              child: SingleChildScrollView(
                 child: Column(
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Product Sales',
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 16.0,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              selectedStartDate == null
+                                  ? ''
+                                  : DateFormat(
+                                      'dd MMM yyyy',
+                                    ).format(selectedStartDate),
+                              style: const TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 12.0,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => _selectStartDate(context),
+                              icon: const Icon(
+                                Icons.calendar_month,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
                         ),
-                        // Sorting Dropdown
-                        BlocBuilder<ProductSalesBloc, ProductSalesState>(
-                          builder: (context, state) {
-                            return state.maybeWhen(
-                              orElse: () => const SizedBox(),
-                              success: (data) {
-                                if (data.data.isEmpty) return const SizedBox();
-                                return DropdownButton<String>(
-                                  hint: const Text('Sort by'),
-                                  items: const [
-                                    DropdownMenuItem(
-                                      value: 'quantity_desc',
-                                      child: Text('Qty: High to Low'),
+                        Row(
+                          children: [
+                            Text(
+                              selectedEndDate == null
+                                  ? ''
+                                  : DateFormat(
+                                      'dd MMM yyyy',
+                                    ).format(selectedEndDate),
+                              style: const TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 12.0,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => _selectEndDate(context),
+                              icon: const Icon(
+                                Icons.calendar_month,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SpaceWidth(4),
+                        Expanded(
+                          child: Button.filled(
+                            onPressed: () async {
+                              // Check connectivity
+                              final isConnected = await ConnectivityHelper()
+                                  .isConnected();
+                              if (!isConnected) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    backgroundColor: Colors.orange,
+                                    content: Text(
+                                      'No internet connection. Please connect to load report data.',
                                     ),
-                                    DropdownMenuItem(
-                                      value: 'quantity_asc',
-                                      child: Text('Qty: Low to High'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'revenue_desc',
-                                      child: Text('Revenue: High to Low'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'revenue_asc',
-                                      child: Text('Revenue: Low to High'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'name_asc',
-                                      child: Text('Name: A-Z'),
-                                    ),
-                                  ],
-                                  onChanged: (value) {
-                                    if (value != null) {
-                                      sortProductSales(value, data.data);
-                                    }
-                                  },
+                                  ),
                                 );
-                              },
-                            );
-                          },
+                                setState(() {
+                                  isOffline = true;
+                                });
+                                return;
+                              }
+
+                              setState(() {
+                                isOffline = false;
+                              });
+
+                              String startDate = DateFormat(
+                                'yyyy-MM-dd',
+                              ).format(selectedStartDate);
+                              String endDate = DateFormat(
+                                'yyyy-MM-dd',
+                              ).format(selectedEndDate);
+                              context.read<SummaryBloc>().add(
+                                SummaryEvent.getSummary(startDate, endDate),
+                              );
+                              context.read<ProductSalesBloc>().add(
+                                ProductSalesEvent.getProductSales(
+                                  startDate,
+                                  endDate,
+                                ),
+                              );
+                            },
+                            label: "Filter",
+                          ),
                         ),
                       ],
                     ),
-                    const SpaceHeight(19.0),
-                    BlocBuilder<ProductSalesBloc, ProductSalesState>(
-                      builder: (context, state) {
-                        return state.maybeWhen(
-                          orElse: () {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          },
-                          error: (message) {
-                            return Column(
-                              children: [
-                                const Icon(
-                                  Icons.error_outline,
-                                  size: 64,
-                                  color: Colors.red,
-                                ),
-                                const SpaceHeight(16),
-                                Text(
-                                  'Failed to load product sales',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SpaceHeight(8),
-                                Text(message),
-                                const SpaceHeight(16),
-                                Button.filled(
-                                  onPressed: () {
-                                    String startDate = DateFormat(
-                                      'yyyy-MM-dd',
-                                    ).format(selectedStartDate);
-                                    String endDate = DateFormat(
-                                      'yyyy-MM-dd',
-                                    ).format(selectedEndDate);
-                                    context.read<ProductSalesBloc>().add(
-                                      ProductSalesEvent.getProductSales(
-                                        startDate,
-                                        endDate,
-                                      ),
-                                    );
-                                  },
-                                  label: 'Retry',
-                                ),
-                              ],
-                            );
-                          },
-                          success: (data) {
-                            if (data.data.isEmpty) {
-                              return Column(
-                                children: [
-                                  const Icon(
-                                    Icons.inbox_outlined,
-                                    size: 64,
-                                    color: AppColors.grey,
-                                  ),
-                                  const SpaceHeight(16),
-                                  const Text(
-                                    'No product sales data',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.grey,
-                                    ),
-                                  ),
-                                  const SpaceHeight(8),
-                                  Text(
-                                    'Try selecting a different date range',
-                                    style: const TextStyle(
-                                      color: AppColors.grey,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }
-
-                            productSales = data.data;
-                            // Initialize sortedProductSales if empty
-                            if (sortedProductSales.isEmpty ||
-                                sortedProductSales.length != data.data.length) {
-                              sortedProductSales = data.data;
-                            }
-
-                            int totalQty = 0;
-                            int totalPrice = 0;
-                            for (var element in data.data) {
-                              totalPrice +=
-                                  element.totalPrice.toIntegerFromText;
-                              totalQty +=
-                                  element.totalQuantity.toIntegerFromText;
-                            }
-
-                            return Column(
-                              children: [
-                                tableProductSales(
-                                  ProductSalesResponseModel(
-                                    status: data.status,
-                                    data: sortedProductSales, // Use sorted data
-                                  ),
-                                  totalPrice,
-                                ),
-                                const SpaceHeight(4),
-                                // Better styled total summary card
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: AppColors.primary,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                    const SpaceHeight(16.0),
+                    Container(
+                      width: MediaQuery.of(context).size.width,
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: AppColors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.card.withOpacity(0.5),
+                            spreadRadius: 5,
+                            blurRadius: 7,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'Summary Report',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 16.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SpaceHeight(16.0),
+                          BlocBuilder<SummaryBloc, SummaryState>(
+                            builder: (context, state) {
+                              return state.maybeWhen(
+                                orElse: () {
+                                  return const Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                },
+                                success: (data) {
+                                  summary = data.data;
+                                  return Column(
                                     children: [
-                                      Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.summarize,
-                                            color: AppColors.primary,
-                                            size: 18,
-                                          ),
-                                          const SpaceWidth(6),
-                                          const Text(
-                                            "Summary",
-                                            style: TextStyle(
-                                              color: AppColors.primary,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ],
+                                      buildPrice(
+                                        'Total Revenue',
+                                        data.data.totalRevenue.toString(),
                                       ),
                                       const SpaceHeight(8),
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Expanded(
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 6,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: AppColors.white,
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                              ),
-                                              child: Column(
-                                                children: [
-                                                  const Text(
-                                                    "Items",
-                                                    style: TextStyle(
-                                                      color: AppColors.grey,
-                                                      fontSize: 10,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    "$totalQty",
-                                                    style: const TextStyle(
-                                                      color: AppColors.primary,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 14,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          const SpaceWidth(6),
-                                          Expanded(
-                                            flex: 2,
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 6,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: AppColors.white,
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                              ),
-                                              child: Column(
-                                                children: [
-                                                  const Text(
-                                                    "Total Revenue",
-                                                    style: TextStyle(
-                                                      color: AppColors.grey,
-                                                      fontSize: 10,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    totalPrice.currencyFormatRp,
-                                                    style: const TextStyle(
-                                                      color: AppColors.primary,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 14,
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          const SpaceWidth(6),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 10,
-                                              vertical: 6,
-                                            ),
-                                            decoration: BoxDecoration(
+                                          const Text(
+                                            "Sold Items",
+                                            style: TextStyle(
                                               color: AppColors.primary,
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
                                             ),
-                                            child: Column(
-                                              children: const [
-                                                Text(
-                                                  "100%",
+                                          ),
+                                          Text(
+                                            "${data.data.totalSoldQuantity} items",
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SpaceHeight(16),
+                    Container(
+                      width: MediaQuery.of(context).size.width,
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: AppColors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.card.withOpacity(0.5),
+                            spreadRadius: 5,
+                            blurRadius: 7,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Product Sales',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 16.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              // Sorting Dropdown
+                              BlocBuilder<ProductSalesBloc, ProductSalesState>(
+                                builder: (context, state) {
+                                  return state.maybeWhen(
+                                    orElse: () => const SizedBox(),
+                                    success: (data) {
+                                      if (data.data.isEmpty)
+                                        return const SizedBox();
+                                      return DropdownButton<String>(
+                                        hint: const Text('Sort by'),
+                                        items: const [
+                                          DropdownMenuItem(
+                                            value: 'quantity_desc',
+                                            child: Text('Qty: High to Low'),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'quantity_asc',
+                                            child: Text('Qty: Low to High'),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'revenue_desc',
+                                            child: Text('Revenue: High to Low'),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'revenue_asc',
+                                            child: Text('Revenue: Low to High'),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'name_asc',
+                                            child: Text('Name: A-Z'),
+                                          ),
+                                        ],
+                                        onChanged: (value) {
+                                          if (value != null) {
+                                            sortProductSales(value, data.data);
+                                          }
+                                        },
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                          const SpaceHeight(19.0),
+                          BlocBuilder<ProductSalesBloc, ProductSalesState>(
+                            builder: (context, state) {
+                              return state.maybeWhen(
+                                orElse: () {
+                                  return const Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                },
+                                error: (message) {
+                                  return Column(
+                                    children: [
+                                      const Icon(
+                                        Icons.error_outline,
+                                        size: 64,
+                                        color: Colors.red,
+                                      ),
+                                      const SpaceHeight(16),
+                                      Text(
+                                        'Failed to load product sales',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SpaceHeight(8),
+                                      Text(message),
+                                      const SpaceHeight(16),
+                                      Button.filled(
+                                        onPressed: () {
+                                          String startDate = DateFormat(
+                                            'yyyy-MM-dd',
+                                          ).format(selectedStartDate);
+                                          String endDate = DateFormat(
+                                            'yyyy-MM-dd',
+                                          ).format(selectedEndDate);
+                                          context.read<ProductSalesBloc>().add(
+                                            ProductSalesEvent.getProductSales(
+                                              startDate,
+                                              endDate,
+                                            ),
+                                          );
+                                        },
+                                        label: 'Retry',
+                                      ),
+                                    ],
+                                  );
+                                },
+                                success: (data) {
+                                  if (data.data.isEmpty) {
+                                    return Column(
+                                      children: [
+                                        const Icon(
+                                          Icons.inbox_outlined,
+                                          size: 64,
+                                          color: AppColors.grey,
+                                        ),
+                                        const SpaceHeight(16),
+                                        const Text(
+                                          'No product sales data',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.grey,
+                                          ),
+                                        ),
+                                        const SpaceHeight(8),
+                                        Text(
+                                          'Try selecting a different date range',
+                                          style: const TextStyle(
+                                            color: AppColors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }
+
+                                  productSales = data.data;
+                                  // Initialize sortedProductSales if empty
+                                  if (sortedProductSales.isEmpty ||
+                                      sortedProductSales.length !=
+                                          data.data.length) {
+                                    sortedProductSales = data.data;
+                                  }
+
+                                  int totalQty = 0;
+                                  int totalPrice = 0;
+                                  for (var element in data.data) {
+                                    totalPrice +=
+                                        element.totalPrice.toIntegerFromText;
+                                    totalQty +=
+                                        element.totalQuantity.toIntegerFromText;
+                                  }
+
+                                  return Column(
+                                    children: [
+                                      tableProductSales(
+                                        ProductSalesResponseModel(
+                                          status: data.status,
+                                          data:
+                                              sortedProductSales, // Use sorted data
+                                        ),
+                                        totalPrice,
+                                      ),
+                                      const SpaceHeight(4),
+                                      // Better styled total summary card
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary.withOpacity(
+                                            0.1,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors.primary,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.summarize,
+                                                  color: AppColors.primary,
+                                                  size: 18,
+                                                ),
+                                                const SpaceWidth(6),
+                                                const Text(
+                                                  "Summary",
                                                   style: TextStyle(
-                                                    color: AppColors.white,
+                                                    color: AppColors.primary,
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 14,
                                                   ),
                                                 ),
                                               ],
                                             ),
-                                          ),
-                                        ],
+                                            const SpaceHeight(8),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Expanded(
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 6,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: AppColors.white,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            6,
+                                                          ),
+                                                    ),
+                                                    child: Column(
+                                                      children: [
+                                                        const Text(
+                                                          "Items",
+                                                          style: TextStyle(
+                                                            color:
+                                                                AppColors.grey,
+                                                            fontSize: 10,
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          "$totalQty",
+                                                          style:
+                                                              const TextStyle(
+                                                                color: AppColors
+                                                                    .primary,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                fontSize: 14,
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SpaceWidth(6),
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 6,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: AppColors.white,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            6,
+                                                          ),
+                                                    ),
+                                                    child: Column(
+                                                      children: [
+                                                        const Text(
+                                                          "Total Revenue",
+                                                          style: TextStyle(
+                                                            color:
+                                                                AppColors.grey,
+                                                            fontSize: 10,
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          totalPrice
+                                                              .currencyFormatRp,
+                                                          style:
+                                                              const TextStyle(
+                                                                color: AppColors
+                                                                    .primary,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                fontSize: 14,
+                                                              ),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SpaceWidth(6),
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 10,
+                                                        vertical: 6,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors.primary,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          6,
+                                                        ),
+                                                  ),
+                                                  child: Column(
+                                                    children: const [
+                                                      Text(
+                                                        "100%",
+                                                        style: TextStyle(
+                                                          color:
+                                                              AppColors.white,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 14,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      },
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 

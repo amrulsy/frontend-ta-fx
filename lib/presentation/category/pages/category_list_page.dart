@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project_ta/core/utils/connectivity_helper.dart';
 import 'package:project_ta/data/datasources/category_remote_datasource.dart';
 import 'package:project_ta/data/models/response/category_response_model.dart';
 import 'package:project_ta/presentation/category/pages/category_form_page.dart';
@@ -14,6 +15,7 @@ class _CategoryListPageState extends State<CategoryListPage> {
   List<Category> categories = [];
   bool isLoading = true;
   String? errorMessage;
+  bool isOffline = false;
 
   @override
   void initState() {
@@ -25,7 +27,18 @@ class _CategoryListPageState extends State<CategoryListPage> {
     setState(() {
       isLoading = true;
       errorMessage = null;
+      isOffline = false;
     });
+
+    // Check connectivity first
+    final isConnected = await ConnectivityHelper().isConnected();
+    if (!isConnected) {
+      setState(() {
+        isOffline = true;
+        isLoading = false;
+      });
+      return;
+    }
 
     try {
       final result = await CategoryRemoteDatasource().getCategories();
@@ -116,6 +129,41 @@ class _CategoryListPageState extends State<CategoryListPage> {
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
+          : isOffline
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.wifi_off, size: 80, color: Colors.orange),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'No Internet Connection',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 32),
+                    child: Text(
+                      'Please connect to the internet to access category management.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: _loadCategories,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Try Again'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
           : errorMessage != null
           ? Center(
               child: Column(
@@ -254,15 +302,31 @@ class _CategoryListPageState extends State<CategoryListPage> {
                 },
               ),
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CategoryFormPage()),
-          ).then((_) => _loadCategories());
-        },
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: !isOffline
+          ? FloatingActionButton(
+              onPressed: () async {
+                // Check connectivity before navigating
+                final isConnected = await ConnectivityHelper().isConnected();
+                if (!isConnected) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('No internet connection'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                  return;
+                }
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CategoryFormPage(),
+                  ),
+                ).then((_) => _loadCategories());
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }

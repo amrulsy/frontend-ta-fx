@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project_ta/core/components/spaces.dart';
 import 'package:project_ta/core/extensions/build_context_ext.dart';
+import 'package:project_ta/core/utils/connectivity_helper.dart';
 import 'package:project_ta/presentation/home/bloc/product/product_bloc.dart';
 import 'package:project_ta/presentation/setting/bloc/sync_order/sync_order_bloc.dart';
 
@@ -62,7 +63,22 @@ class _SyncDataPageState extends State<SyncDataPage> {
               return state.maybeWhen(
                 orElse: () {
                   return ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      // Check connectivity
+                      final isConnected = await ConnectivityHelper()
+                          .isConnected();
+                      if (!isConnected) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            backgroundColor: Colors.orange,
+                            content: Text(
+                              'No internet connection. Please connect to sync data.',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
                       context.read<ProductBloc>().add(
                         const ProductEvent.fetch(),
                       );
@@ -104,7 +120,22 @@ class _SyncDataPageState extends State<SyncDataPage> {
               return state.maybeWhen(
                 orElse: () {
                   return ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      // Check connectivity
+                      final isConnected = await ConnectivityHelper()
+                          .isConnected();
+                      if (!isConnected) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            backgroundColor: Colors.orange,
+                            content: Text(
+                              'No internet connection. Please connect to sync data.',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
                       context.read<SyncOrderBloc>().add(
                         const SyncOrderEvent.sendOrder(),
                       );
@@ -146,7 +177,22 @@ class _SyncDataPageState extends State<SyncDataPage> {
               return state.maybeWhen(
                 orElse: () {
                   return ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      // Check connectivity
+                      final isConnected = await ConnectivityHelper()
+                          .isConnected();
+                      if (!isConnected) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            backgroundColor: Colors.orange,
+                            content: Text(
+                              'No internet connection. Please connect to sync data.',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
                       context.read<CategoryBloc>().add(
                         const CategoryEvent.getCategories(),
                       );

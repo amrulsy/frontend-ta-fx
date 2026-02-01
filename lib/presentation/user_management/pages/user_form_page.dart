@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project_ta/core/utils/connectivity_helper.dart';
 import 'package:project_ta/data/datasources/user_remote_datasource.dart';
 import 'package:project_ta/data/models/request/user_request_model.dart';
 import 'package:project_ta/data/models/request/user_update_request_model.dart';
@@ -45,6 +46,41 @@ class _UserFormPageState extends State<UserFormPage> {
   Future<void> _saveUser() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Check connectivity
+    final isConnected = await ConnectivityHelper().isConnected();
+    if (!isConnected) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.wifi_off, color: Colors.red),
+              SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  'No Internet Connection',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            widget.user == null
+                ? 'Please connect to the internet to add a user.'
+                : 'Please connect to the internet to update a user.',
+            style: const TextStyle(fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     setState(() {
       isLoading = true;
     });
@@ -63,14 +99,14 @@ class _UserFormPageState extends State<UserFormPage> {
         final result = await UserRemoteDatasource().createUser(userRequest);
         result.fold(
           (error) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error: $error')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('Error: $error')));
           },
           (response) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(response.message)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(response.message)));
             Navigator.pop(context);
           },
         );
@@ -79,7 +115,9 @@ class _UserFormPageState extends State<UserFormPage> {
         final userRequest = UserUpdateRequestModel(
           name: _nameController.text,
           email: _emailController.text,
-          password: _passwordController.text.isEmpty ? null : _passwordController.text,
+          password: _passwordController.text.isEmpty
+              ? null
+              : _passwordController.text,
           phone: _phoneController.text.isEmpty ? null : _phoneController.text,
           roles: selectedRole,
         );
@@ -90,22 +128,22 @@ class _UserFormPageState extends State<UserFormPage> {
         );
         result.fold(
           (error) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error: $error')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('Error: $error')));
           },
           (response) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(response.message)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(response.message)));
             Navigator.pop(context);
           },
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       setState(() {
         isLoading = false;
@@ -140,10 +178,7 @@ class _UserFormPageState extends State<UserFormPage> {
                 children: [
                   const Text(
                     'Full Name',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
@@ -176,10 +211,7 @@ class _UserFormPageState extends State<UserFormPage> {
                 children: [
                   const Text(
                     'Email',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
@@ -200,7 +232,9 @@ class _UserFormPageState extends State<UserFormPage> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter email address';
                       }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                      if (!RegExp(
+                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                      ).hasMatch(value)) {
                         return 'Please enter a valid email address';
                       }
                       return null;
@@ -215,7 +249,9 @@ class _UserFormPageState extends State<UserFormPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.user == null ? 'Password' : 'Password (leave empty to keep current)',
+                    widget.user == null
+                        ? 'Password'
+                        : 'Password (leave empty to keep current)',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -237,7 +273,9 @@ class _UserFormPageState extends State<UserFormPage> {
                       hintText: 'Enter password',
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                         ),
                         onPressed: () {
                           setState(() {
@@ -247,10 +285,13 @@ class _UserFormPageState extends State<UserFormPage> {
                       ),
                     ),
                     validator: (value) {
-                      if (widget.user == null && (value == null || value.isEmpty)) {
+                      if (widget.user == null &&
+                          (value == null || value.isEmpty)) {
                         return 'Please enter password';
                       }
-                      if (value != null && value.isNotEmpty && value.length < 8) {
+                      if (value != null &&
+                          value.isNotEmpty &&
+                          value.length < 8) {
                         return 'Password must be at least 8 characters';
                       }
                       return null;
@@ -266,10 +307,7 @@ class _UserFormPageState extends State<UserFormPage> {
                 children: [
                   const Text(
                     'Phone (Optional)',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
@@ -297,10 +335,7 @@ class _UserFormPageState extends State<UserFormPage> {
                 children: [
                   const Text(
                     'Role',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
@@ -336,9 +371,7 @@ class _UserFormPageState extends State<UserFormPage> {
                 onPressed: isLoading ? null : _saveUser,
                 child: isLoading
                     ? const CircularProgressIndicator()
-                    : Text(
-                        widget.user == null ? 'Create User' : 'Update User',
-                      ),
+                    : Text(widget.user == null ? 'Create User' : 'Update User'),
               ),
             ],
           ),
