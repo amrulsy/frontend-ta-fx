@@ -12,101 +12,146 @@ class HistoryTransactionCard extends StatelessWidget {
   final OrderModel data;
   final EdgeInsetsGeometry? padding;
 
-  const HistoryTransactionCard({
-    super.key,
-    required this.data,
-    this.padding,
-  });
+  const HistoryTransactionCard({super.key, required this.data, this.padding});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-        margin: padding,
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              offset: const Offset(0, 2),
-              blurRadius: 48.0,
-              blurStyle: BlurStyle.outer,
-              spreadRadius: 0,
-              color: AppColors.black.withOpacity(0.06),
-            ),
-          ],
-        ),
-        child: ExpansionTile(
-          shape: RoundedRectangleBorder(
-            side: BorderSide.none,
-            borderRadius: BorderRadius.circular(0.0),
+      margin: padding,
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            offset: const Offset(0, 2),
+            blurRadius: 48.0,
+            blurStyle: BlurStyle.outer,
+            spreadRadius: 0,
+            color: AppColors.black.withOpacity(0.06),
           ),
-          title: Row(
-            children: [
-              Assets.icons.payments.svg(),
-              const SizedBox(width: 12.0),
-              Text(
+        ],
+      ),
+      child: ExpansionTile(
+        shape: RoundedRectangleBorder(
+          side: BorderSide.none,
+          borderRadius: BorderRadius.circular(0.0),
+        ),
+        title: Row(
+          children: [
+            Assets.icons.payments.svg(),
+            const SizedBox(width: 12.0),
+            // Sync status indicator
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 6.0,
+                vertical: 2.0,
+              ),
+              decoration: BoxDecoration(
+                color: data.isSync
+                    ? Colors.green.shade100
+                    : Colors.amber.shade100,
+                borderRadius: BorderRadius.circular(4.0),
+                border: Border.all(
+                  color: data.isSync ? Colors.green : Colors.amber.shade700,
+                  width: 1.0,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    data.isSync ? Icons.cloud_done : Icons.cloud_upload,
+                    size: 12.0,
+                    color: data.isSync
+                        ? Colors.green.shade700
+                        : Colors.amber.shade800,
+                  ),
+                  const SizedBox(width: 3.0),
+                  Text(
+                    data.isSync ? 'Synced' : 'Need Sync',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: data.isSync
+                          ? Colors.green.shade700
+                          : Colors.amber.shade800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8.0),
+            Expanded(
+              child: Text(
                 '${data.transactionTime.toFormattedTime} - ${data.paymentMethod == 'QRIS' ? 'QRIS' : 'Cash'}',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
-              const Spacer(),
-              Text(
-                data.totalPrice.currencyFormatRp,
-                style: const TextStyle(
-                  color: AppColors.green,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
-              )
-            ],
-          ),
-          children: [
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: data.orders.length + 1,
-              itemBuilder: (context, index) {
-                if (index == data.orders.length) {
-                  return Padding(
-                    padding: const EdgeInsets.only(
-                        top: 4.0, left: 16, right: 16, bottom: 16),
-                    child: Button.filled(
-                      onPressed: () async {
-                        // print receipt
-                        final printInt = await CwbPrint.instance.printOrderV2(
-                          data.orders,
-                          data.totalQuantity,
-                          data.totalPrice,
-                          data.paymentMethod,
-                          data.nominalBayar,
-                          data.namaKasir,
-                          'Customer',
-                        );
-                        CwbPrint.instance.printReceipt(printInt);
-                      },
-                      label: 'Print Receipt',
-                    ),
-                  );
-                }
-                final item = data.orders[index];
-                return ListTile(
-                  title: Text(item.product.name),
-                  subtitle: Text(
-                    '${item.quantity} x ${item.product.price.currencyFormatRp}',
-                  ),
-                  trailing: Text(
-                    '${item.quantity * item.product.price}'.currencyFormatRp,
-                    style: const TextStyle(
-                      color: AppColors.green,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                );
-                //button print
-              },
+            ),
+            const SizedBox(width: 8.0),
+            Text(
+              data.totalPrice.currencyFormatRp,
+              style: const TextStyle(
+                color: AppColors.green,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
-        ));
+        ),
+        children: [
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: data.orders.length + 1,
+            itemBuilder: (context, index) {
+              if (index == data.orders.length) {
+                return Padding(
+                  padding: const EdgeInsets.only(
+                    top: 4.0,
+                    left: 16,
+                    right: 16,
+                    bottom: 16,
+                  ),
+                  child: Button.filled(
+                    onPressed: () async {
+                      // print receipt
+                      final printInt = await CwbPrint.instance.printOrderV2(
+                        data.orders,
+                        data.totalQuantity,
+                        data.totalPrice,
+                        data.paymentMethod,
+                        data.nominalBayar,
+                        data.namaKasir,
+                        'Customer',
+                      );
+                      CwbPrint.instance.printReceipt(printInt);
+                    },
+                    label: 'Print Receipt',
+                  ),
+                );
+              }
+              final item = data.orders[index];
+              return ListTile(
+                title: Text(item.product.name),
+                subtitle: Text(
+                  '${item.quantity} x ${item.product.price.currencyFormatRp}',
+                ),
+                trailing: Text(
+                  '${item.quantity * item.product.price}'.currencyFormatRp,
+                  style: const TextStyle(
+                    color: AppColors.green,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              );
+              //button print
+            },
+          ),
+        ],
+      ),
+    );
   }
 }

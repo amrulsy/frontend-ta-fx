@@ -42,8 +42,10 @@ class Category {
 
   String toJson() => json.encode(toMap());
 
-  factory Category.fromMap(Map<String, dynamic> json) =>
-      Category(id: json["id"] ?? 0, name: json["name"] ?? "");
+  factory Category.fromMap(Map<String, dynamic> json) => Category(
+    id: json["id"] is String ? int.tryParse(json["id"]) ?? 0 : json["id"] ?? 0,
+    name: json["name"] ?? "",
+  );
 
   factory Category.fromLocal(Map<String, dynamic> json) =>
       Category(id: json["category_id"] ?? 0, name: json["name"] ?? "");

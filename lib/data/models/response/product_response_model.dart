@@ -66,20 +66,23 @@ class Product {
   String toJson() => json.encode(toMap());
 
   factory Product.fromMap(Map<String, dynamic> json) => Product(
-    id: json["id"],
-    productId: json["product_id"],
+    id: json["id"] is String ? int.tryParse(json["id"]) : json["id"],
+    productId: json["product_id"] is String
+        ? int.tryParse(json["product_id"])
+        : json["product_id"],
     name: json["name"],
     description: json["description"] ?? '',
-    price: json["price"],
-    stock: json["stock"],
+    price: json["price"] is String ? int.parse(json["price"]) : json["price"],
+    stock: json["stock"] is String ? int.parse(json["stock"]) : json["stock"],
     category: json["category"],
     categoryId: json["category_id"] is String
         ? int.parse(json["category_id"])
         : json["category_id"],
     image: json["image"] ?? '',
     imageUrl: json["image_url"],
-    isBestSeller: json["is_best_seller"] == 1 ? true : false,
-    
+    isBestSeller: json["is_best_seller"] is String
+        ? int.tryParse(json["is_best_seller"]) == 1
+        : json["is_best_seller"] == 1,
   );
 
   Map<String, dynamic> toMap() => {

@@ -26,23 +26,28 @@ class OrderResponseModel {
 
   String toJson() => json.encode(toMap());
 
-  factory OrderResponseModel.fromMap(Map<String, dynamic> json) =>
-      OrderResponseModel(
-        id: json["id"] ?? 0,
-        transactionTime: json["transaction_time"] ?? '',
-        kasirId: json["kasir_id"] ?? 0,
-        kasirName: json["kasir_name"] ?? '',
-        totalPrice: json["total_price"] ?? 0,
-        totalItem: json["total_item"] ?? 0,
-        paymentMethod: json["payment_method"] ?? 'cash',
-        orderItems: json["order_items"] != null
-            ? List<OrderItemResponseModel>.from(
-                json["order_items"].map(
-                  (x) => OrderItemResponseModel.fromMap(x),
-                ),
-              )
-            : [],
-      );
+  factory OrderResponseModel.fromMap(
+    Map<String, dynamic> json,
+  ) => OrderResponseModel(
+    id: json["id"] is String ? int.tryParse(json["id"]) ?? 0 : json["id"] ?? 0,
+    transactionTime: json["transaction_time"] ?? '',
+    kasirId: json["kasir_id"] is String
+        ? int.tryParse(json["kasir_id"]) ?? 0
+        : json["kasir_id"] ?? 0,
+    kasirName: json["kasir_name"] ?? '',
+    totalPrice: json["total_price"] is String
+        ? int.tryParse(json["total_price"]) ?? 0
+        : json["total_price"] ?? 0,
+    totalItem: json["total_item"] is String
+        ? int.tryParse(json["total_item"]) ?? 0
+        : json["total_item"] ?? 0,
+    paymentMethod: json["payment_method"] ?? 'cash',
+    orderItems: json["order_items"] != null
+        ? List<OrderItemResponseModel>.from(
+            json["order_items"].map((x) => OrderItemResponseModel.fromMap(x)),
+          )
+        : [],
+  );
 
   Map<String, dynamic> toMap() => {
     "id": id,
@@ -78,11 +83,19 @@ class OrderItemResponseModel {
 
   factory OrderItemResponseModel.fromMap(Map<String, dynamic> json) =>
       OrderItemResponseModel(
-        id: json["id"] ?? 0,
-        productId: json["product_id"] ?? 0,
+        id: json["id"] is String
+            ? int.tryParse(json["id"]) ?? 0
+            : json["id"] ?? 0,
+        productId: json["product_id"] is String
+            ? int.tryParse(json["product_id"]) ?? 0
+            : json["product_id"] ?? 0,
         productName: json["product_name"] ?? '',
-        quantity: json["quantity"] ?? 0,
-        price: json["price"] ?? 0,
+        quantity: json["quantity"] is String
+            ? int.tryParse(json["quantity"]) ?? 0
+            : json["quantity"] ?? 0,
+        price: json["price"] is String
+            ? int.tryParse(json["price"]) ?? 0
+            : json["price"] ?? 0,
       );
 
   Map<String, dynamic> toMap() => {
