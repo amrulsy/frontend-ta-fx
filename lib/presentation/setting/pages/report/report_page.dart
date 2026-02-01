@@ -28,8 +28,17 @@ class ReportPage extends StatefulWidget {
 }
 
 class _ReportPageState extends State<ReportPage> {
-  DateTime selectedStartDate = DateTime.now().subtract(const Duration(days: 1));
-  DateTime selectedEndDate = DateTime.now();
+  // Normalize to beginning of day (00:00:00) to avoid time-based filtering issues
+  DateTime selectedStartDate = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    DateTime.now().day,
+  );
+  DateTime selectedEndDate = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    DateTime.now().day,
+  );
 
   List<ProductSales> productSales = [];
   List<ProductSales> sortedProductSales = []; // For displaying sorted data
@@ -57,6 +66,12 @@ class _ReportPageState extends State<ReportPage> {
 
     String startDate = DateFormat('yyyy-MM-dd').format(selectedStartDate);
     String endDate = DateFormat('yyyy-MM-dd').format(selectedEndDate);
+
+    // Debug logging
+    log('🔍 Filter Date: start_date=$startDate, end_date=$endDate');
+    log('🔍 selectedStartDate: $selectedStartDate');
+    log('🔍 selectedEndDate: $selectedEndDate');
+
     context.read<SummaryBloc>().add(
       SummaryEvent.getSummary(startDate, endDate),
     );
@@ -114,7 +129,8 @@ class _ReportPageState extends State<ReportPage> {
     );
     if (picked != null && picked != selectedStartDate) {
       setState(() {
-        selectedStartDate = picked;
+        // Normalize to beginning of day
+        selectedStartDate = DateTime(picked.year, picked.month, picked.day);
       });
     }
   }
@@ -128,7 +144,8 @@ class _ReportPageState extends State<ReportPage> {
     );
     if (picked != null && picked != selectedEndDate) {
       setState(() {
-        selectedEndDate = picked;
+        // Normalize to beginning of day
+        selectedEndDate = DateTime(picked.year, picked.month, picked.day);
       });
     }
   }
@@ -297,6 +314,14 @@ class _ReportPageState extends State<ReportPage> {
                               String endDate = DateFormat(
                                 'yyyy-MM-dd',
                               ).format(selectedEndDate);
+
+                              // Debug logging
+                              log(
+                                '🔍 Filter Date: start_date=$startDate, end_date=$endDate',
+                              );
+                              log('🔍 selectedStartDate: $selectedStartDate');
+                              log('🔍 selectedEndDate: $selectedEndDate');
+
                               context.read<SummaryBloc>().add(
                                 SummaryEvent.getSummary(startDate, endDate),
                               );

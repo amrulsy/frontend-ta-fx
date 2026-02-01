@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dartz/dartz.dart';
 import 'package:http/http.dart' as http;
 
@@ -13,15 +15,21 @@ class ReportRemoteDatasource {
   ) async {
     final authData = await AuthLocalDatasource().getAuthData();
     if (authData == null) return left('User belum login');
+
+    final url =
+        '${Variables.baseUrl}/api/reports/summary?start_date=$startDate&end_date=$endDate';
+    log('🌐 API Call getSummary: $url');
+
     final response = await http.get(
-      Uri.parse(
-        '${Variables.baseUrl}/api/reports/summary?start_date=$startDate&end_date=$endDate',
-      ),
+      Uri.parse(url),
       headers: {
         'Authorization': 'Bearer ${authData.token}',
         'Accept': 'application/json',
       },
     );
+
+    log('📊 Response Status: ${response.statusCode}');
+    log('📦 Response Body: ${response.body}');
 
     if (response.statusCode == 200) {
       return right(SummaryResponseModel.fromJson(response.body));
@@ -36,12 +44,18 @@ class ReportRemoteDatasource {
   ) async {
     final authData = await AuthLocalDatasource().getAuthData();
     if (authData == null) return left('User belum login');
+
+    final url =
+        '${Variables.baseUrl}/api/reports/product-sales?start_date=$startDate&end_date=$endDate';
+    log('🌐 API Call getProductSales: $url');
+
     final response = await http.get(
-      Uri.parse(
-        '${Variables.baseUrl}/api/reports/product-sales?start_date=$startDate&end_date=$endDate',
-      ),
+      Uri.parse(url),
       headers: {'Authorization': 'Bearer ${authData.token}'},
     );
+
+    log('📊 Response Status: ${response.statusCode}');
+    log('📦 Response Body: ${response.body}');
 
     if (response.statusCode == 200) {
       return right(ProductSalesResponseModel.fromJson(response.body));
