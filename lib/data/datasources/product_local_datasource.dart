@@ -377,6 +377,78 @@ class ProductLocalDatasource {
     }
   }
 
+  // Smart Sync for Products (Delta Sync Logic Client-Side)
+  // Compares remote data with local data to minimize DB operations
+  Future<void> syncProducts(List<Product> remoteProducts) async {
+    final db = await instance.database;
+
+    await db.transaction((txn) async {
+      // 1. Get all local products mapping (ServerID -> LocalData)
+      final localData = await txn.query(tableProducts);
+      Map<int, Map<String, dynamic>> localMap = {};
+
+      for (var p in localData) {
+        final sId = p['product_id'];
+        if (sId != null && sId is int) {
+          localMap[sId] = p;
+        }
+      }
+
+      int inserted = 0;
+      int updated = 0;
+      int deleted = 0;
+
+      // 2. Process Remote Products
+      for (var remote in remoteProducts) {
+        final serverId = remote.id; // Remote Model 'id' is Server ID
+
+        if (serverId != null) {
+          if (localMap.containsKey(serverId)) {
+            // Check for changes (Simple check: compare key fields)
+            final local = localMap[serverId]!;
+            bool isChanged = false;
+
+            if (local['name'] != remote.name) isChanged = true;
+            if (local['price'] != remote.price) isChanged = true;
+            if (local['stock'] != remote.stock) isChanged = true;
+            if (local['category'] != remote.category) isChanged = true;
+            // Add more fields if necessary
+
+            if (isChanged) {
+              await txn.update(
+                tableProducts,
+                remote.toLocalMap(),
+                where: 'product_id = ?',
+                whereArgs: [serverId],
+              );
+              updated++;
+            }
+
+            // Mark as processed by removing from map
+            localMap.remove(serverId);
+          } else {
+            // New Product
+            await txn.insert(tableProducts, remote.toLocalMap());
+            inserted++;
+          }
+        }
+      }
+
+      // 3. Delete products that are no longer on server
+      // Remaining items in localMap are orphans
+      for (var sId in localMap.keys) {
+        await txn.delete(
+          tableProducts,
+          where: 'product_id = ?',
+          whereArgs: [sId],
+        );
+        deleted++;
+      }
+
+      print('🔄 Smart Product Sync: +$inserted, ~$updated, -$deleted');
+    });
+  }
+
   //isert data product
   Future<Product> insertProduct(Product product) async {
     final db = await instance.database;

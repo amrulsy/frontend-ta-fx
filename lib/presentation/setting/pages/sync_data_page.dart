@@ -46,8 +46,8 @@ class _SyncDataPageState extends State<SyncDataPage> {
               state.maybeMap(
                 orElse: () {},
                 success: (successState) async {
-                  await ProductLocalDatasource.instance.removeAllProduct();
-                  await ProductLocalDatasource.instance.insertAllProduct(
+                  // Use smart sync instead of delete-all-insert-all
+                  await ProductLocalDatasource.instance.syncProducts(
                     successState.products.toList(),
                   );
                   ScaffoldMessenger.of(context).showSnackBar(

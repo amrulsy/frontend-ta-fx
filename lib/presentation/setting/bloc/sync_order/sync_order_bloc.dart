@@ -107,42 +107,70 @@ class SyncOrderBloc extends Bloc<SyncOrderEvent, SyncOrderState> {
       print('Success: $uploadSuccessCount');
       print('Failed: $uploadFailedCount');
 
-      // STEP 1.5: FORCE SYNC ALL LOCAL STOCKS TO SERVER
-      // This ensures server stock matches local stock even if previous syncs failed
-      print('\n=== STEP 1.5: FORCE SYNC ALL STOCKS ===');
+      // STEP 1.5: OPTIMIZED FORCE SYNC ALL STOCKS
+      // Strategy: Compare first, then update only differences in parallel batches.
+      print('\n=== STEP 1.5: OPTIMIZED FORCE SYNC ALL STOCKS ===');
       try {
         final allLocalProducts = await ProductLocalDatasource.instance
             .getAllProduct();
-        print('Total products to check: ${allLocalProducts.length}');
 
-        int stockSyncCount = 0;
+        // 1. Fetch Server Products to compare (Save time by only updating dirty items)
+        final serverProductsResult = await ProductRemoteDatasource()
+            .getProducts();
+        Map<int, int> serverStockMap = {};
+
+        serverProductsResult.fold(
+          (l) => print('⚠️ Could not fetch server products for comparison: $l'),
+          (r) {
+            for (var p in r.data) {
+              // Assuming 'id' in remove response is the Server ID
+              if (p.id != null) serverStockMap[p.id!] = p.stock;
+            }
+          },
+        );
+
+        // 2. Identify mismatching products
+        List<dynamic> productsToUpdate = []; // Dynamic to allow Product type
         for (final product in allLocalProducts) {
-          // Only sync if product has Server ID
-          if (product.productId != null || product.id != null) {
-            final serverId =
-                product.productId ??
-                product.id; // Use logic consistent with RemoteDS
-            // Skip if serverId is likely invalid (e.g. 0 or very small if conflicting with local)
-            // But assuming remote DS handles correct ID selection.
-
-            // Optimization: We could check if stock isDirty? No flag available.
-            // Just sync all.
-
-            final result = await ProductRemoteDatasource().updateProductStock(
-              product,
-              product.stock,
-            );
-
-            result.fold(
-              (l) => print('   ❌ Failed sync stock for ${product.name}: $l'),
-              (r) {
-                stockSyncCount++;
-                // print('   ✅ Synced stock for ${product.name} -> ${product.stock}');
-              },
-            );
+          final serverId = product.productId ?? product.id;
+          if (serverId != null) {
+            // Update IF server stock is unknown (newly synced?) OR different
+            if (!serverStockMap.containsKey(serverId) ||
+                serverStockMap[serverId] != product.stock) {
+              productsToUpdate.add(product);
+            }
           }
         }
-        print('Synced stock for $stockSyncCount products');
+
+        print(
+          'Total products to update: ${productsToUpdate.length} out of ${allLocalProducts.length} local items',
+        );
+
+        // 3. Parallel Processing with Batches (Avoid server overload)
+        int batchSize = 5;
+        int successCount = 0;
+
+        for (var i = 0; i < productsToUpdate.length; i += batchSize) {
+          var end = (i + batchSize < productsToUpdate.length)
+              ? i + batchSize
+              : productsToUpdate.length;
+          var batch = productsToUpdate.sublist(i, end);
+
+          await Future.wait(
+            batch.map((product) async {
+              final result = await ProductRemoteDatasource().updateProductStock(
+                product,
+                product.stock,
+              );
+              result.fold(
+                (l) => print('   ❌ Failed sync stock for ${product.name}: $l'),
+                (r) => successCount++,
+              );
+            }),
+          );
+          // print('   Batch $i-$end processed');
+        }
+        print('✅ Batch Stock Sync Completed. Updated: $successCount');
       } catch (e) {
         print('❌ Exception during Force Stock Sync: $e');
       }
