@@ -62,12 +62,11 @@ class _HomePageState extends State<HomePage> {
           SearchInput(
             controller: searchController,
             onChanged: (value) {
-              if (value.length > 3) {
+              if (value.isNotEmpty) {
                 context.read<ProductBloc>().add(
                   ProductEvent.searchProduct(value),
                 );
-              }
-              if (value.isEmpty) {
+              } else {
                 context.read<ProductBloc>().add(
                   const ProductEvent.fetchAllFromState(),
                 );

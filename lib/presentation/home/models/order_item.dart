@@ -1,21 +1,14 @@
 import 'dart:convert';
-
 import 'package:project_ta/data/models/request/order_request_model.dart';
 import 'package:project_ta/data/models/response/product_response_model.dart';
 
 class OrderItem {
   final Product product;
   int quantity;
-  OrderItem({
-    required this.product,
-    required this.quantity,
-  });
+  OrderItem({required this.product, required this.quantity});
 
   Map<String, dynamic> toMap() {
-    return {
-      'product': product.toMap(),
-      'quantity': quantity,
-    };
+    return {'product': product.toMap(), 'quantity': quantity};
   }
 
   // id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,7 +30,8 @@ class OrderItem {
     return OrderItemModel(
       productId: map['id_product']?.toInt() ?? 0,
       quantity: map['quantity']?.toInt() ?? 0,
-      totalPrice: map['price']?.toInt() ?? 0 * (map['quantity']?.toInt() ?? 0),
+      totalPrice:
+          (map['price']?.toInt() ?? 0) * (map['quantity']?.toInt() ?? 0),
     );
   }
 

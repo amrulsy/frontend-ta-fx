@@ -5,6 +5,7 @@ import 'package:project_ta/presentation/setting/models/category_model.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/components/buttons.dart';
+import '../../../core/utils/connectivity_helper.dart';
 import '../../../core/components/custom_dropdown.dart';
 import '../../../core/components/custom_text_field.dart';
 import '../../../core/components/image_picker_widget.dart';
@@ -163,7 +164,57 @@ class _AddProductPageState extends State<AddProductPage> {
                       },
                       success: (_) {
                         return Button.filled(
-                          onPressed: () {
+                          onPressed: () async {
+                            // Check internet connectivity
+                            final isConnected = await ConnectivityHelper()
+                                .isConnected();
+
+                            if (!isConnected) {
+                              // Show offline dialog
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Row(
+                                    children: [
+                                      Icon(Icons.wifi_off, color: Colors.red),
+                                      SizedBox(width: 8),
+                                      Text('No Internet Connection'),
+                                    ],
+                                  ),
+                                  content: const Text(
+                                    'Please connect to the internet to add a product.',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              return;
+                            }
+
+                            // Validate inputs
+                            if (nameController!.text.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Please enter product name'),
+                                ),
+                              );
+                              return;
+                            }
+
+                            if (imageFile == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Please select an image'),
+                                ),
+                              );
+                              return;
+                            }
+
                             final String name = nameController!.text;
                             final int price =
                                 priceController!.text.toIntegerFromText;

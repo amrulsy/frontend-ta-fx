@@ -27,10 +27,11 @@ class _SyncDataPageState extends State<SyncDataPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-            onPressed: () {
-              context.pop();
-            },
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.white)),
+          onPressed: () {
+            context.pop();
+          },
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+        ),
         title: const Text('Sync Data'),
         centerTitle: true,
       ),
@@ -45,13 +46,15 @@ class _SyncDataPageState extends State<SyncDataPage> {
                 orElse: () {},
                 success: (successState) async {
                   await ProductLocalDatasource.instance.removeAllProduct();
-                  await ProductLocalDatasource.instance
-                      .insertAllProduct(successState.products.toList());
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  await ProductLocalDatasource.instance.insertAllProduct(
+                    successState.products.toList(),
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
                       backgroundColor: AppColors.primary,
-                      content: Text(
-                        'Sync data product success',
-                      )));
+                      content: Text('Sync data product success'),
+                    ),
+                  );
                 },
               );
             },
@@ -59,17 +62,16 @@ class _SyncDataPageState extends State<SyncDataPage> {
               return state.maybeWhen(
                 orElse: () {
                   return ElevatedButton(
-                      onPressed: () {
-                        context
-                            .read<ProductBloc>()
-                            .add(const ProductEvent.fetch());
-                      },
-                      child: const Text('Sync Data Product'));
+                    onPressed: () {
+                      context.read<ProductBloc>().add(
+                        const ProductEvent.fetch(),
+                      );
+                    },
+                    child: const Text('Sync Data Product'),
+                  );
                 },
                 loading: () {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
+                  return const Center(child: CircularProgressIndicator());
                 },
               );
             },
@@ -81,14 +83,20 @@ class _SyncDataPageState extends State<SyncDataPage> {
               state.maybeMap(
                 orElse: () {},
                 success: (_) async {
-                  // await ProductLocalDatasource.instance.removeAllProduct();
-                  // await ProductLocalDatasource.instance
-                  //     .insertAllProduct(_.products.toList());
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
                       backgroundColor: AppColors.primary,
-                      content: Text(
-                        'Sync data orders success',
-                      )));
+                      content: Text('Sync data orders success'),
+                    ),
+                  );
+                },
+                error: (errorState) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      backgroundColor: Colors.red,
+                      content: Text(errorState.message),
+                    ),
+                  );
                 },
               );
             },
@@ -96,17 +104,16 @@ class _SyncDataPageState extends State<SyncDataPage> {
               return state.maybeWhen(
                 orElse: () {
                   return ElevatedButton(
-                      onPressed: () {
-                        context
-                            .read<SyncOrderBloc>()
-                            .add(const SyncOrderEvent.sendOrder());
-                      },
-                      child: const Text('Sync Data Orders'));
+                    onPressed: () {
+                      context.read<SyncOrderBloc>().add(
+                        const SyncOrderEvent.sendOrder(),
+                      );
+                    },
+                    child: const Text('Sync Data Orders'),
+                  );
                 },
                 loading: () {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
+                  return const Center(child: CircularProgressIndicator());
                 },
               );
             },
@@ -119,17 +126,19 @@ class _SyncDataPageState extends State<SyncDataPage> {
                 orElse: () {},
                 loaded: (data) async {
                   await ProductLocalDatasource.instance.removeAllCategories();
-                  await ProductLocalDatasource.instance
-                      .insertAllCategories(data.categories);
-                  context
-                      .read<CategoryBloc>()
-                      .add(const CategoryEvent.getCategoriesLocal());
+                  await ProductLocalDatasource.instance.insertAllCategories(
+                    data.categories,
+                  );
+                  context.read<CategoryBloc>().add(
+                    const CategoryEvent.getCategoriesLocal(),
+                  );
                   context.pop();
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
                       backgroundColor: AppColors.primary,
-                      content: Text(
-                        'Sync data categories success',
-                      )));
+                      content: Text('Sync data categories success'),
+                    ),
+                  );
                 },
               );
             },
@@ -137,17 +146,16 @@ class _SyncDataPageState extends State<SyncDataPage> {
               return state.maybeWhen(
                 orElse: () {
                   return ElevatedButton(
-                      onPressed: () {
-                        context
-                            .read<CategoryBloc>()
-                            .add(const CategoryEvent.getCategories());
-                      },
-                      child: const Text('Sync Data Categories'));
+                    onPressed: () {
+                      context.read<CategoryBloc>().add(
+                        const CategoryEvent.getCategories(),
+                      );
+                    },
+                    child: const Text('Sync Data Categories'),
+                  );
                 },
                 loading: () {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
+                  return const Center(child: CircularProgressIndicator());
                 },
               );
             },

@@ -39,19 +39,18 @@ class OrderCard extends StatelessWidget {
           child: Row(
             children: [
               ClipRRect(
-                  borderRadius: const BorderRadius.all(Radius.circular(50.0)),
-                  child: CachedNetworkImage(
-                    width: 76,
-                    height: 76,
-                    fit: BoxFit.cover,
-                    imageUrl: '${Variables.imageBaseUrl}${data.product.image}',
-                    placeholder: (context, url) =>
-                        const CircularProgressIndicator(),
-                    errorWidget: (context, url, error) => const Icon(
-                      Icons.food_bank_outlined,
-                      size: 80,
-                    ),
-                  )),
+                borderRadius: const BorderRadius.all(Radius.circular(50.0)),
+                child: CachedNetworkImage(
+                  width: 76,
+                  height: 76,
+                  fit: BoxFit.cover,
+                  imageUrl: '${Variables.imageBaseUrl}${data.product.image}',
+                  placeholder: (context, url) =>
+                      const CircularProgressIndicator(),
+                  errorWidget: (context, url, error) =>
+                      const Icon(Icons.food_bank_outlined, size: 80),
+                ),
+              ),
               const SpaceWidth(24.0),
               Flexible(
                 child: Column(
@@ -60,17 +59,18 @@ class OrderCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          data.product.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
+                        Expanded(
+                          child: Text(
+                            data.product.name,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
                           ),
                         ),
+                        const SpaceWidth(8.0),
                         Text(
                           data.product.price.currencyFormatRp,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ],
                     ),
@@ -81,7 +81,8 @@ class OrderCard extends StatelessWidget {
                           GestureDetector(
                             onTap: () {
                               context.read<CheckoutBloc>().add(
-                                  CheckoutEvent.removeCheckout(data.product));
+                                CheckoutEvent.removeCheckout(data.product),
+                              );
                             },
                             child: Container(
                               color: AppColors.white,
@@ -99,9 +100,9 @@ class OrderCard extends StatelessWidget {
                           ),
                           GestureDetector(
                             onTap: () {
-                              context
-                                  .read<CheckoutBloc>()
-                                  .add(CheckoutEvent.addCheckout(data.product));
+                              context.read<CheckoutBloc>().add(
+                                CheckoutEvent.addCheckout(data.product),
+                              );
                             },
                             child: Container(
                               color: AppColors.white,
@@ -124,10 +125,7 @@ class OrderCard extends StatelessWidget {
           padding: const EdgeInsets.only(right: 16.0),
           child: IconButton(
             onPressed: onDeleteTap,
-            icon: const Icon(
-              Icons.highlight_off,
-              color: AppColors.primary,
-            ),
+            icon: const Icon(Icons.highlight_off, color: AppColors.primary),
           ),
         ),
       ],

@@ -26,12 +26,13 @@ class PaymentCashDialog extends StatefulWidget {
 
 class _PaymentCashDialogState extends State<PaymentCashDialog> {
   TextEditingController?
-      priceController; // = TextEditingController(text: widget.price.currencyFormatRp);
+  priceController; // = TextEditingController(text: widget.price.currencyFormatRp);
 
   @override
   void initState() {
-    priceController =
-        TextEditingController(text: widget.price.currencyFormatRp);
+    priceController = TextEditingController(
+      text: widget.price.currencyFormatRp,
+    );
     super.initState();
   }
 
@@ -75,7 +76,8 @@ class _PaymentCashDialogState extends State<PaymentCashDialog> {
               final int priceValue = value.toIntegerFromText;
               priceController!.text = priceValue.currencyFormatRp;
               priceController!.selection = TextSelection.fromPosition(
-                  TextPosition(offset: priceController!.text.length));
+                TextPosition(offset: priceController!.text.length),
+              );
             },
           ),
           const SpaceHeight(16.0),
@@ -109,104 +111,129 @@ class _PaymentCashDialogState extends State<PaymentCashDialog> {
             listener: (context, state) {
               state.maybeWhen(
                 orElse: () {},
-                success: (data, qty, total, payment, nominal, idKasir,
-                    namaKasir, _) {
-                  final orderModel = OrderModel(
-                      paymentMethod: payment,
-                      nominalBayar: nominal,
-                      orders: data,
-                      totalQuantity: qty,
-                      totalPrice: total,
-                      idKasir: idKasir,
-                      namaKasir: namaKasir,
-                      //tranction time format 2024-01-03T22:12:22
-                      transactionTime: DateFormat('yyyy-MM-ddTHH:mm:ss')
-                          .format(DateTime.now()),
-                      isSync: true);
-                  ProductLocalDatasource.instance.saveOrder(orderModel);
-                  final OrderRequestModel orderRequestModel = OrderRequestModel(
-                    transactionTime: DateFormat('yyyy-MM-ddTHH:mm:ss')
-                        .format(DateTime.now()),
-                    kasirId: idKasir,
-                    totalPrice: total,
-                    totalItem: qty,
-                    paymentMethod: payment,
-                    orderItems: data
-                        .map((e) => OrderItemModel(
-                            productId: e.product.productId!,
-                            quantity: e.quantity,
-                            totalPrice: e.product.price * e.quantity))
-                        .toList(),
-                  );
-                  OrderRemoteDatasource().sendOrder(orderRequestModel);
-                  context.pop();
-                  showDialog(
-                    context: context,
-                    builder: (context) => const PaymentSuccessDialog(),
-                  );
-                },
+                success:
+                    (
+                      data,
+                      qty,
+                      total,
+                      payment,
+                      nominal,
+                      idKasir,
+                      namaKasir,
+                      _,
+                    ) {
+                      final orderModel = OrderModel(
+                        paymentMethod: payment,
+                        nominalBayar: nominal,
+                        orders: data,
+                        totalQuantity: qty,
+                        totalPrice: total,
+                        idKasir: idKasir,
+                        namaKasir: namaKasir,
+                        //tranction time format 2024-01-03T22:12:22
+                        transactionTime: DateFormat(
+                          'yyyy-MM-ddTHH:mm:ss',
+                        ).format(DateTime.now()),
+                        isSync: false,
+                      );
+                      ProductLocalDatasource.instance.saveOrder(orderModel);
+                      final OrderRequestModel orderRequestModel =
+                          OrderRequestModel(
+                            transactionTime: DateFormat(
+                              'yyyy-MM-ddTHH:mm:ss',
+                            ).format(DateTime.now()),
+                            kasirId: idKasir,
+                            totalPrice: total,
+                            totalItem: qty,
+                            paymentMethod: payment,
+                            orderItems: data
+                                .map(
+                                  (e) => OrderItemModel(
+                                    productId: e.product.productId!,
+                                    quantity: e.quantity,
+                                    totalPrice: e.product.price * e.quantity,
+                                  ),
+                                )
+                                .toList(),
+                          );
+                      OrderRemoteDatasource().sendOrder(orderRequestModel);
+                      context.pop();
+                      showDialog(
+                        context: context,
+                        builder: (context) => const PaymentSuccessDialog(),
+                      );
+                    },
               );
             },
             builder: (context, state) {
-              return state.maybeWhen(orElse: () {
-                return const SizedBox();
-              }, success:
-                  (data, qty, total, payment, _, idKasir, mameKasir, __) {
-                return Button.filled(
-                  onPressed: () {
-                    //check if price is empty
-                    if (priceController!.text.isEmpty) {
-                      //show dialog error
-                      showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: const Text('Error'),
-                              content: const Text('Please input the price'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: const Text('OK'),
-                                ),
-                              ],
+              return state.maybeWhen(
+                orElse: () {
+                  return const SizedBox();
+                },
+                success:
+                    (data, qty, total, payment, _, idKasir, mameKasir, __) {
+                      return Button.filled(
+                        onPressed: () {
+                          //check if price is empty
+                          if (priceController!.text.isEmpty) {
+                            //show dialog error
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: const Text('Error'),
+                                  content: const Text('Please input the price'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                );
+                              },
                             );
-                          });
-                      return;
-                    }
+                            return;
+                          }
 
-                    //if price less than total price
-                    if (priceController!.text.toIntegerFromText < total) {
-                      //show dialog error
-                      showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: const Text('Error'),
-                              content: const Text(
-                                  'The nominal is less than the total price'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: const Text('OK'),
-                                ),
-                              ],
+                          //if price less than total price
+                          if (priceController!.text.toIntegerFromText < total) {
+                            //show dialog error
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: const Text('Error'),
+                                  content: const Text(
+                                    'The nominal is less than the total price',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                );
+                              },
                             );
-                          });
-                      return;
-                    }
-                    context.read<OrderBloc>().add(OrderEvent.addNominalBayar(
-                          priceController!.text.toIntegerFromText,
-                        ));
-                  },
-                  label: 'Pay',
-                );
-              }, error: (message) {
-                return const SizedBox();
-              });
+                            return;
+                          }
+                          context.read<OrderBloc>().add(
+                            OrderEvent.addNominalBayar(
+                              priceController!.text.toIntegerFromText,
+                            ),
+                          );
+                        },
+                        label: 'Pay',
+                      );
+                    },
+                error: (message) {
+                  return const SizedBox();
+                },
+              );
             },
           ),
         ],
