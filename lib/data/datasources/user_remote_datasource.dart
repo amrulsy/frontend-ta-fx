@@ -9,6 +9,7 @@ import 'package:project_ta/data/models/response/user_response_model.dart';
 class UserRemoteDatasource {
   Future<Either<String, UserResponseModel>> getUsers() async {
     final authData = await AuthLocalDatasource().getAuthData();
+    if (authData == null) return left('User belum login');
     final Map<String, String> headers = {
       'Authorization': 'Bearer ${authData.token}',
       'Content-Type': 'application/json',
@@ -28,6 +29,7 @@ class UserRemoteDatasource {
 
   Future<Either<String, UserCrudResponseModel>> getUser(int id) async {
     final authData = await AuthLocalDatasource().getAuthData();
+    if (authData == null) return left('User belum login');
     final Map<String, String> headers = {
       'Authorization': 'Bearer ${authData.token}',
       'Content-Type': 'application/json',
@@ -49,6 +51,7 @@ class UserRemoteDatasource {
     UserRequestModel userRequestModel,
   ) async {
     final authData = await AuthLocalDatasource().getAuthData();
+    if (authData == null) return left('User belum login');
     final Map<String, String> headers = {
       'Authorization': 'Bearer ${authData.token}',
       'Content-Type': 'application/json',
@@ -72,6 +75,7 @@ class UserRemoteDatasource {
     UserUpdateRequestModel userUpdateRequestModel,
   ) async {
     final authData = await AuthLocalDatasource().getAuthData();
+    if (authData == null) return left('User belum login');
     final Map<String, String> headers = {
       'Authorization': 'Bearer ${authData.token}',
       'Content-Type': 'application/json',
@@ -92,6 +96,7 @@ class UserRemoteDatasource {
 
   Future<Either<String, UserCrudResponseModel>> deleteUser(int id) async {
     final authData = await AuthLocalDatasource().getAuthData();
+    if (authData == null) return left('User belum login');
     final Map<String, String> headers = {
       'Authorization': 'Bearer ${authData.token}',
       'Content-Type': 'application/json',

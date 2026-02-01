@@ -35,9 +35,10 @@ class _OrderPageState extends State<OrderPage> {
   int totalPrice = 0;
   int calculateTotalPrice(List<OrderItem> orders) {
     return orders.fold(
-        0,
-        (previousValue, element) =>
-            previousValue + element.product.price * element.quantity);
+      0,
+      (previousValue, element) =>
+          previousValue + element.product.price * element.quantity,
+    );
   }
 
   @override
@@ -54,17 +55,11 @@ class _OrderPageState extends State<OrderPage> {
           onPressed: () {
             context.push(const DashboardPage());
           },
-          icon: const Icon(
-            Icons.arrow_back_ios,
-            color: Colors.white,
-          ),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
         ),
         title: const Text(
           'Order Detail',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         centerTitle: true,
         actions: [
@@ -72,134 +67,133 @@ class _OrderPageState extends State<OrderPage> {
             onPressed: () {
               //show dialog save order
               showDialog(
-                  context: context,
-                  builder: (context) {
-                    return AlertDialog(
-                      title: const Text('Open Bill'),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          //nomor meja
-                          TextFormField(
-                            decoration: const InputDecoration(
-                              hintText: 'Table Number',
-                            ),
-                            //number
-                            keyboardType: TextInputType.number,
-                            controller: tableNumberController,
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: const Text('Open Bill'),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        //nomor meja
+                        TextFormField(
+                          decoration: const InputDecoration(
+                            hintText: 'Table Number',
                           ),
-                          TextFormField(
-                            decoration: const InputDecoration(
-                              hintText: 'Order Name',
-                            ),
-                            controller: orderNameController,
-                            textCapitalization: TextCapitalization.words,
-                          ),
-                        ],
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: const Text('Cancel'),
+                          //number
+                          keyboardType: TextInputType.number,
+                          controller: tableNumberController,
                         ),
-                        BlocBuilder<CheckoutBloc, CheckoutState>(
-                          builder: (context, state) {
-                            return state.maybeWhen(
-                              orElse: () {
-                                return const SizedBox.shrink();
-                              },
-                              success: (data, qty, total, draftName) {
-                                return Button.outlined(
-                                  onPressed: () async {
-                                    final authData = await AuthLocalDatasource()
-                                        .getAuthData();
-                                    context.read<CheckoutBloc>().add(
-                                          CheckoutEvent.saveDraftOrder(
-                                              tableNumberController
-                                                  .text.toIntegerFromText,
-                                              orderNameController.text),
-                                        );
-
-                                    final printInt =
-                                        await CwbPrint.instance.printChecker(
-                                      data,
-                                      tableNumberController.text.toInt,
-                                      orderNameController.text,
-                                      authData.user.name,
-                                    );
-
-                                    //print for customer
-                                    CwbPrint.instance.printReceipt(printInt);
-                                    // //print for kitchen
-                                    // CwbPrint.instance.printReceipt(printInt);
-                                    //clear checkout
-                                    context.read<CheckoutBloc>().add(
-                                          const CheckoutEvent.started(),
-                                        );
-                                    //open bill success snack bar
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content:
-                                            Text('Save Draft Order Success'),
-                                        backgroundColor: AppColors.primary,
-                                      ),
-                                    );
-
-                                    context
-                                        .pushReplacement(const DashboardPage());
-                                  },
-                                  label: 'Save & Print',
-                                  fontSize: 14,
-                                  height: 40,
-                                  width: 140,
-                                );
-                              },
-                            );
-                          },
+                        TextFormField(
+                          decoration: const InputDecoration(
+                            hintText: 'Order Name',
+                          ),
+                          controller: orderNameController,
+                          textCapitalization: TextCapitalization.words,
                         ),
                       ],
-                    );
-                  });
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Cancel'),
+                      ),
+                      BlocBuilder<CheckoutBloc, CheckoutState>(
+                        builder: (context, state) {
+                          return state.maybeWhen(
+                            orElse: () {
+                              return const SizedBox.shrink();
+                            },
+                            success: (data, qty, total, draftName) {
+                              return Button.outlined(
+                                onPressed: () async {
+                                  final authData = await AuthLocalDatasource()
+                                      .getAuthData();
+                                  context.read<CheckoutBloc>().add(
+                                    CheckoutEvent.saveDraftOrder(
+                                      tableNumberController
+                                          .text
+                                          .toIntegerFromText,
+                                      orderNameController.text,
+                                    ),
+                                  );
+
+                                  final printInt = await CwbPrint.instance
+                                      .printChecker(
+                                        data,
+                                        tableNumberController.text.toInt,
+                                        orderNameController.text,
+                                        authData?.user.name ?? 'Cashier',
+                                      );
+
+                                  //print for customer
+                                  CwbPrint.instance.printReceipt(printInt);
+                                  // //print for kitchen
+                                  // CwbPrint.instance.printReceipt(printInt);
+                                  //clear checkout
+                                  context.read<CheckoutBloc>().add(
+                                    const CheckoutEvent.started(),
+                                  );
+                                  //open bill success snack bar
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Save Draft Order Success'),
+                                      backgroundColor: AppColors.primary,
+                                    ),
+                                  );
+
+                                  context.pushReplacement(
+                                    const DashboardPage(),
+                                  );
+                                },
+                                label: 'Save & Print',
+                                fontSize: 14,
+                                height: 40,
+                                width: 140,
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
             },
-            icon: const Icon(
-              Icons.save_as_outlined,
-              color: Colors.white,
-            ),
+            icon: const Icon(Icons.save_as_outlined, color: Colors.white),
           ),
           const SpaceWidth(8),
         ],
       ),
       body: BlocBuilder<CheckoutBloc, CheckoutState>(
         builder: (context, state) {
-          return state.maybeWhen(orElse: () {
-            return const Center(
-              child: Text('No Data'),
-            );
-          }, success: (data, qty, total, draftName) {
-            if (data.isEmpty) {
-              return const Center(
-                child: Text('No Data'),
-              );
-            }
+          return state.maybeWhen(
+            orElse: () {
+              return const Center(child: Text('No Data'));
+            },
+            success: (data, qty, total, draftName) {
+              if (data.isEmpty) {
+                return const Center(child: Text('No Data'));
+              }
 
-            totalPrice = total;
-            return ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
-              itemCount: data.length,
-              separatorBuilder: (context, index) => const SpaceHeight(20.0),
-              itemBuilder: (context, index) => OrderCard(
-                padding: paddingHorizontal,
-                data: data[index],
-                onDeleteTap: () {
-                  context.read<CheckoutBloc>().add(
-                        CheckoutEvent.removeProduct(data[index].product),
-                      );
-                },
-              ),
-            );
-          });
+              totalPrice = total;
+              return ListView.separated(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                itemCount: data.length,
+                separatorBuilder: (context, index) => const SpaceHeight(20.0),
+                itemBuilder: (context, index) => OrderCard(
+                  padding: paddingHorizontal,
+                  data: data[index],
+                  onDeleteTap: () {
+                    context.read<CheckoutBloc>().add(
+                      CheckoutEvent.removeProduct(data[index].product),
+                    );
+                  },
+                ),
+              );
+            },
+          );
         },
       ),
       bottomNavigationBar: Padding(
@@ -226,8 +220,12 @@ class _OrderPageState extends State<OrderPage> {
                               onPressed: () {
                                 indexValue.value = 1;
                                 context.read<OrderBloc>().add(
-                                    OrderEvent.addPaymentMethod(
-                                        'Tunai', data, draftName));
+                                  OrderEvent.addPaymentMethod(
+                                    'Tunai',
+                                    data,
+                                    draftName,
+                                  ),
+                                );
                               },
                             ),
                           ),
@@ -257,9 +255,7 @@ class _OrderPageState extends State<OrderPage> {
                 } else if (indexValue.value == 1) {
                   showDialog(
                     context: context,
-                    builder: (context) => PaymentCashDialog(
-                      price: totalPrice,
-                    ),
+                    builder: (context) => PaymentCashDialog(price: totalPrice),
                   );
                 }
               },

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:project_ta/data/datasources/auth_local_datasource.dart';
+
 import 'package:project_ta/presentation/auth/bloc/login/login_bloc.dart';
 
 import '../../../core/assets/assets.gen.dart';
@@ -35,12 +35,13 @@ class _LoginPageState extends State<LoginPage> {
         children: [
           const SpaceHeight(150.0),
           Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 50.0),
-              child: Image.asset(
-                Assets.images.logo.path,
-                width: 100,
-                height: 100,
-              )),
+            padding: const EdgeInsets.symmetric(horizontal: 50.0),
+            child: Image.asset(
+              Assets.images.logo.path,
+              width: 100,
+              height: 100,
+            ),
+          ),
           const SpaceHeight(24.0),
           const Center(
             child: Text(
@@ -64,10 +65,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
           const SpaceHeight(40.0),
-          CustomTextField(
-            controller: usernameController,
-            label: 'Email',
-          ),
+          CustomTextField(controller: usernameController, label: 'Email'),
           const SpaceHeight(12.0),
           CustomTextField(
             controller: passwordController,
@@ -80,7 +78,6 @@ class _LoginPageState extends State<LoginPage> {
               state.maybeWhen(
                 orElse: () {},
                 success: (authResponseModel) {
-                  AuthLocalDatasource().saveAuthData(authResponseModel);
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
@@ -100,23 +97,24 @@ class _LoginPageState extends State<LoginPage> {
             },
             child: BlocBuilder<LoginBloc, LoginState>(
               builder: (context, state) {
-                return state.maybeWhen(orElse: () {
-                  return Button.filled(
-                    onPressed: () {
-                      context.read<LoginBloc>().add(
-                            LoginEvent.login(
-                              email: usernameController.text,
-                              password: passwordController.text,
-                            ),
-                          );
-                    },
-                    label: 'Login',
-                  );
-                }, loading: () {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                });
+                return state.maybeWhen(
+                  orElse: () {
+                    return Button.filled(
+                      onPressed: () {
+                        context.read<LoginBloc>().add(
+                          LoginEvent.login(
+                            email: usernameController.text,
+                            password: passwordController.text,
+                          ),
+                        );
+                      },
+                      label: 'Login',
+                    );
+                  },
+                  loading: () {
+                    return const Center(child: CircularProgressIndicator());
+                  },
+                );
               },
             ),
           ),

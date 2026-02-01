@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project_ta/data/datasources/auth_local_datasource.dart';
 import 'package:project_ta/data/datasources/auth_remote_datasource.dart';
-import 'package:project_ta/data/datasources/order_remote_datasource.dart';
+
 import 'package:project_ta/data/datasources/product_remote_datasource.dart';
 import 'package:project_ta/data/datasources/report_remote_datasource.dart';
 import 'package:project_ta/presentation/auth/pages/login_page.dart';
@@ -16,6 +16,7 @@ import 'package:project_ta/presentation/setting/bloc/report/close_cashier/close_
 import 'package:project_ta/presentation/setting/bloc/report/product_sales/product_sales_bloc.dart';
 import 'package:project_ta/presentation/setting/bloc/report/summary/summary_bloc.dart';
 import 'package:project_ta/presentation/setting/bloc/sync_order/sync_order_bloc.dart';
+import 'package:project_ta/data/repositories/order_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'core/constants/colors.dart';
@@ -34,7 +35,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => LoginBloc(AuthRemoteDatasource())),
+        BlocProvider(
+          create: (context) =>
+              LoginBloc(AuthRemoteDatasource(), AuthLocalDatasource()),
+        ),
         BlocProvider(create: (context) => LogoutBloc(AuthRemoteDatasource())),
         BlocProvider(
           create: (context) =>
@@ -44,9 +48,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (context) => CheckoutBloc()),
         BlocProvider(create: (context) => OrderBloc()),
         BlocProvider(create: (context) => HistoryBloc()),
-        BlocProvider(
-          create: (context) => SyncOrderBloc(OrderRemoteDatasource()),
-        ),
+        BlocProvider(create: (context) => SyncOrderBloc(OrderRepository())),
         BlocProvider(
           create: (context) => CategoryBloc(ProductRemoteDatasource()),
         ),

@@ -11,6 +11,7 @@ class CategoryRemoteDatasource {
   // Get all categories
   Future<Either<String, CategoryResponseModel>> getCategories() async {
     final authData = await AuthLocalDatasource().getAuthData();
+    if (authData == null) return left('User belum login');
     final response = await http.get(
       Uri.parse('${Variables.baseUrl}/api/categories'),
       headers: {
@@ -31,6 +32,7 @@ class CategoryRemoteDatasource {
     CategoryRequestModel categoryRequestModel,
   ) async {
     final authData = await AuthLocalDatasource().getAuthData();
+    if (authData == null) return left('User belum login');
     final response = await http.post(
       Uri.parse('${Variables.baseUrl}/api/categories'),
       headers: {
@@ -54,6 +56,7 @@ class CategoryRemoteDatasource {
     CategoryRequestModel categoryRequestModel,
   ) async {
     final authData = await AuthLocalDatasource().getAuthData();
+    if (authData == null) return left('User belum login');
     final response = await http.put(
       Uri.parse('${Variables.baseUrl}/api/categories/$id'),
       headers: {
@@ -76,6 +79,7 @@ class CategoryRemoteDatasource {
     int id,
   ) async {
     final authData = await AuthLocalDatasource().getAuthData();
+    if (authData == null) return left('User belum login');
     final response = await http.delete(
       Uri.parse('${Variables.baseUrl}/api/categories/$id'),
       headers: {

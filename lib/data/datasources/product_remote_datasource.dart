@@ -13,6 +13,7 @@ import 'auth_local_datasource.dart';
 class ProductRemoteDatasource {
   Future<Either<String, ProductResponseModel>> getProducts() async {
     final authData = await AuthLocalDatasource().getAuthData();
+    if (authData == null) return left('User belum login');
     final response = await http.get(
       Uri.parse('${Variables.baseUrl}/api/products'),
       headers: {'Authorization': 'Bearer ${authData.token}'},
@@ -29,6 +30,7 @@ class ProductRemoteDatasource {
     ProductRequestModel productRequestModel,
   ) async {
     final authData = await AuthLocalDatasource().getAuthData();
+    if (authData == null) return left('User belum login');
     final Map<String, String> headers = {
       'Authorization': 'Bearer ${authData.token}',
     };
@@ -59,6 +61,7 @@ class ProductRemoteDatasource {
   //get categories
   Future<Either<String, CategoryResponseModel>> getCategories() async {
     final authData = await AuthLocalDatasource().getAuthData();
+    if (authData == null) return left('User belum login');
     final response = await http.get(
       Uri.parse('${Variables.baseUrl}/api/categories'),
       headers: {
@@ -77,6 +80,7 @@ class ProductRemoteDatasource {
   // Get single product
   Future<Either<String, ProductCrudResponseModel>> getProduct(int id) async {
     final authData = await AuthLocalDatasource().getAuthData();
+    if (authData == null) return left('User belum login');
     final response = await http.get(
       Uri.parse('${Variables.baseUrl}/api/products/$id'),
       headers: {
@@ -98,6 +102,7 @@ class ProductRemoteDatasource {
     ProductUpdateRequestModel productRequestModel,
   ) async {
     final authData = await AuthLocalDatasource().getAuthData();
+    if (authData == null) return left('User belum login');
     final Map<String, String> headers = {
       'Authorization': 'Bearer ${authData.token}',
     };
@@ -135,6 +140,7 @@ class ProductRemoteDatasource {
   // Delete product
   Future<Either<String, ProductCrudResponseModel>> deleteProduct(int id) async {
     final authData = await AuthLocalDatasource().getAuthData();
+    if (authData == null) return left('User belum login');
     final response = await http.delete(
       Uri.parse('${Variables.baseUrl}/api/products/$id'),
       headers: {

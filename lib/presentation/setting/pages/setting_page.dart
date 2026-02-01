@@ -38,7 +38,7 @@ class _SettingPageState extends State<SettingPage> {
     try {
       final authData = await AuthLocalDatasource().getAuthData();
       setState(() {
-        currentUser = authData.user;
+        currentUser = authData?.user;
         isLoading = false;
       });
     } catch (e) {
@@ -51,152 +51,153 @@ class _SettingPageState extends State<SettingPage> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-            onPressed: () {
-              context.push(const DashboardPage());
-            },
-          ),
-          centerTitle: true,
-          title: const Text(
-            'Settings',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () {
+            context.push(const DashboardPage());
+          },
         ),
-        body: Column(
-          children: [
-            const SpaceHeight(20.0),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                children: [
-                  if (currentUser?.roles == 'admin')
-                    Flexible(
-                      child: MenuButton(
-                        iconPath: Assets.images.manageProduct.path,
-                        label: 'Setting Product',
-                        onPressed: () => context.push(const ManageProductPage()),
-                        isImage: true,
-                      ),
-                    ),
-                  if (currentUser?.roles == 'admin')
-                    const SpaceWidth(15.0),
+        centerTitle: true,
+        title: const Text(
+          'Settings',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: Column(
+        children: [
+          const SpaceHeight(20.0),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Row(
+              children: [
+                if (currentUser?.roles == 'admin')
                   Flexible(
                     child: MenuButton(
-                      iconPath: Assets.images.managePrinter.path,
-                      label: 'Setting Printer',
-                      onPressed: () {
-                        context.push(const ManagePrinterPage());
-                      },
+                      iconPath: Assets.images.manageProduct.path,
+                      label: 'Setting Product',
+                      onPressed: () => context.push(const ManageProductPage()),
                       isImage: true,
                     ),
                   ),
-                ],
-              ),
+                if (currentUser?.roles == 'admin') const SpaceWidth(15.0),
+                Flexible(
+                  child: MenuButton(
+                    iconPath: Assets.images.managePrinter.path,
+                    label: 'Setting Printer',
+                    onPressed: () {
+                      context.push(const ManagePrinterPage());
+                    },
+                    isImage: true,
+                  ),
+                ),
+              ],
             ),
-            const SpaceHeight(20.0),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                children: [
+          ),
+          const SpaceHeight(20.0),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Row(
+              children: [
+                Flexible(
+                  child: MenuButton(
+                    iconPath: Assets.images.sync.path,
+                    label: 'Sync Data',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SyncDataPage(),
+                        ),
+                      );
+                    },
+                    isImage: true,
+                  ),
+                ),
+                if (currentUser?.roles == 'admin') ...[
+                  const SpaceWidth(15.0),
                   Flexible(
                     child: MenuButton(
-                      iconPath: Assets.images.sync.path,
-                      label: 'Sync Data',
+                      iconPath: Assets
+                          .images
+                          .manageProduct
+                          .path, // Using existing icon
+                      label: 'User Management',
                       onPressed: () {
                         Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const SyncDataPage()));
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const UserListPage(),
+                          ),
+                        );
                       },
                       isImage: true,
                     ),
                   ),
-                  if (currentUser?.roles == 'admin') ...[  
-                    const SpaceWidth(15.0),
-                    Flexible(
-                      child: MenuButton(
-                        iconPath: Assets.images.manageProduct.path, // Using existing icon
-                        label: 'User Management',
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const UserListPage(),
-                            ),
-                          );
-                        },
-                        isImage: true,
-                      ),
-                    ),
-                  ],
                 ],
-              ),
+              ],
             ),
-            const SpaceHeight(20.0),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                children: [
-                  Flexible(
-                    child: MenuButton(
-                      iconPath: Assets.images.report.path,
-                      label: 'Report',
-                      onPressed: () => context.push(const ReportPage()),
-                      isImage: true,
+          ),
+          const SpaceHeight(20.0),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Row(
+              children: [
+                Flexible(
+                  child: MenuButton(
+                    iconPath: Assets.images.report.path,
+                    label: 'Report',
+                    onPressed: () => context.push(const ReportPage()),
+                    isImage: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: BlocConsumer<LogoutBloc, LogoutState>(
+              listener: (context, state) {
+                state.maybeMap(
+                  orElse: () {},
+                  success: (_) {
+                    AuthLocalDatasource().removeAuthData();
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginPage(),
+                      ),
+                    );
+                  },
+                );
+              },
+              builder: (context, state) {
+                return ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    minimumSize: const Size(double.infinity, 50),
+                  ),
+                  onPressed: () {
+                    context.read<LogoutBloc>().add(const LogoutEvent.logout());
+                  },
+                  child: const Text(
+                    'Logout',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ],
-              ),
+                );
+              },
             ),
-            const Spacer(),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: BlocConsumer<LogoutBloc, LogoutState>(
-                listener: (context, state) {
-                  state.maybeMap(
-                    orElse: () {},
-                    success: (_) {
-                      AuthLocalDatasource().removeAuthData();
-                      Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const LoginPage()));
-                    },
-                  );
-                },
-                builder: (context, state) {
-                  return ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      minimumSize: const Size(double.infinity, 50),
-                    ),
-                    onPressed: () {
-                      context
-                          .read<LogoutBloc>()
-                          .add(const LogoutEvent.logout());
-                    },
-                    child: const Text(
-                      'Logout',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ));
+          ),
+        ],
+      ),
+    );
   }
 }

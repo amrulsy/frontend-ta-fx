@@ -13,36 +13,46 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     on<_AddPaymentMethod>((event, emit) async {
       emit(const _Loading());
       final userData = await AuthLocalDatasource().getAuthData();
-      emit(_Success(
-        event.orders,
-        event.orders.fold(
-            0, (previousValue, element) => previousValue + element.quantity),
-        event.orders.fold(
+      final userId = userData?.user.id ?? 0;
+      final userName = userData?.user.name ?? '';
+
+      emit(
+        _Success(
+          event.orders,
+          event.orders.fold(
+            0,
+            (previousValue, element) => previousValue + element.quantity,
+          ),
+          event.orders.fold(
             0,
             (previousValue, element) =>
-                previousValue + (element.quantity * element.product.price)),
-        event.paymentMethod,
-        0,
-        userData.user.id,
-        userData.user.name,
-        event.customerName,
-      ));
+                previousValue + (element.quantity * element.product.price),
+          ),
+          event.paymentMethod,
+          0,
+          userId,
+          userName,
+          event.customerName,
+        ),
+      );
     });
 
     on<_AddNominalBayar>((event, emit) {
       var currentStates = state as _Success;
       emit(const _Loading());
 
-      emit(_Success(
-        currentStates.products,
-        currentStates.totalQuantity,
-        currentStates.totalPrice,
-        currentStates.paymentMethod,
-        event.nominal,
-        currentStates.idKasir,
-        currentStates.namaKasir,
-        currentStates.customerName,
-      ));
+      emit(
+        _Success(
+          currentStates.products,
+          currentStates.totalQuantity,
+          currentStates.totalPrice,
+          currentStates.paymentMethod,
+          event.nominal,
+          currentStates.idKasir,
+          currentStates.namaKasir,
+          currentStates.customerName,
+        ),
+      );
     });
 
     //started

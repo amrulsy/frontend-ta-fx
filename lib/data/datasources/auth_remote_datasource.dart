@@ -11,10 +11,7 @@ class AuthRemoteDatasource {
   ) async {
     final response = await http.post(
       Uri.parse('${Variables.baseUrl}/api/login'),
-      body: {
-        'email': email,
-        'password': password,
-      },
+      body: {'email': email, 'password': password},
     );
     if (response.statusCode == 200) {
       return right(AuthResponseModel.fromJson(response.body));
@@ -25,11 +22,10 @@ class AuthRemoteDatasource {
 
   Future<Either<String, String>> logout() async {
     final authData = await AuthLocalDatasource().getAuthData();
+    if (authData == null) return left('User belum login');
     final response = await http.post(
       Uri.parse('${Variables.baseUrl}/api/logout'),
-      headers: {
-        'Authorization': 'Bearer ${authData.token}',
-      },
+      headers: {'Authorization': 'Bearer ${authData.token}'},
     );
     if (response.statusCode == 200) {
       return right(response.body);

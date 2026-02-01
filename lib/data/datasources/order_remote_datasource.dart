@@ -11,6 +11,7 @@ class OrderRemoteDatasource {
     try {
       final url = Uri.parse('${Variables.baseUrl}/api/orders');
       final authData = await AuthLocalDatasource().getAuthData();
+      if (authData == null) return false;
       final Map<String, String> headers = {
         'Authorization': 'Bearer ${authData.token}',
         'Accept': 'application/json',
@@ -50,6 +51,7 @@ class OrderRemoteDatasource {
     try {
       final url = Uri.parse('${Variables.baseUrl}/api/orders');
       final authData = await AuthLocalDatasource().getAuthData();
+      if (authData == null) return [];
       final Map<String, String> headers = {
         'Authorization': 'Bearer ${authData.token}',
         'Accept': 'application/json',
