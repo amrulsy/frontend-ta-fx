@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project_ta/core/utils/connectivity_helper.dart';
 import 'package:project_ta/data/datasources/category_remote_datasource.dart';
 import 'package:project_ta/data/models/request/category_request_model.dart';
 import 'package:project_ta/data/models/response/category_response_model.dart';
@@ -32,6 +33,38 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
 
   Future<void> _saveCategory() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Check internet connectivity
+    final isConnected = await ConnectivityHelper().isConnected();
+
+    if (!isConnected) {
+      // Show offline dialog
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.wifi_off, color: Colors.red),
+              SizedBox(width: 8),
+              Text('No Internet Connection'),
+            ],
+          ),
+          content: Text(
+            widget.category == null
+                ? 'Please connect to the internet to add a category.'
+                : 'Please connect to the internet to update a category.',
+            style: const TextStyle(fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
 
     setState(() {
       isLoading = true;
