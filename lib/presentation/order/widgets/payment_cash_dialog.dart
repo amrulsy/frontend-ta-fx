@@ -111,58 +111,70 @@ class _PaymentCashDialogState extends State<PaymentCashDialog> {
             listener: (context, state) {
               state.maybeWhen(
                 orElse: () {},
-                success:
-                    (
-                      data,
-                      qty,
-                      total,
-                      payment,
-                      nominal,
-                      idKasir,
-                      namaKasir,
-                      _,
-                    ) {
-                      final orderModel = OrderModel(
-                        paymentMethod: payment,
-                        nominalBayar: nominal,
-                        orders: data,
-                        totalQuantity: qty,
-                        totalPrice: total,
-                        idKasir: idKasir,
-                        namaKasir: namaKasir,
-                        //tranction time format 2024-01-03T22:12:22
-                        transactionTime: DateFormat(
-                          'yyyy-MM-ddTHH:mm:ss',
-                        ).format(DateTime.now()),
-                        isSync: false,
-                      );
-                      ProductLocalDatasource.instance.saveOrder(orderModel);
-                      final OrderRequestModel orderRequestModel =
-                          OrderRequestModel(
-                            transactionTime: DateFormat(
-                              'yyyy-MM-ddTHH:mm:ss',
-                            ).format(DateTime.now()),
-                            kasirId: idKasir,
-                            totalPrice: total,
-                            totalItem: qty,
-                            paymentMethod: payment,
-                            orderItems: data
-                                .map(
-                                  (e) => OrderItemModel(
-                                    productId: e.product.productId!,
-                                    quantity: e.quantity,
-                                    totalPrice: e.product.price * e.quantity,
-                                  ),
-                                )
-                                .toList(),
-                          );
-                      OrderRemoteDatasource().sendOrder(orderRequestModel);
-                      context.pop();
-                      showDialog(
-                        context: context,
-                        builder: (context) => const PaymentSuccessDialog(),
-                      );
-                    },
+                success: (data, qty, total, payment, nominal, idKasir, namaKasir, _) async {
+                  final orderModel = OrderModel(
+                    paymentMethod: payment,
+                    nominalBayar: nominal,
+                    orders: data,
+                    totalQuantity: qty,
+                    totalPrice: total,
+                    idKasir: idKasir,
+                    namaKasir: namaKasir,
+                    //tranction time format 2024-01-03T22:12:22
+                    transactionTime: DateFormat(
+                      'yyyy-MM-ddTHH:mm:ss',
+                    ).format(DateTime.now()),
+                    isSync: false,
+                  );
+
+                  // Save order to local database first
+                  final orderId = await ProductLocalDatasource.instance
+                      .saveOrder(orderModel);
+
+                  final OrderRequestModel orderRequestModel = OrderRequestModel(
+                    transactionTime: DateFormat(
+                      'yyyy-MM-ddTHH:mm:ss',
+                    ).format(DateTime.now()),
+                    kasirId: idKasir,
+                    totalPrice: total,
+                    totalItem: qty,
+                    paymentMethod: payment,
+                    orderItems: data
+                        .map(
+                          (e) => OrderItemModel(
+                            productId: e.product.productId!,
+                            quantity: e.quantity,
+                            totalPrice: e.product.price * e.quantity,
+                          ),
+                        )
+                        .toList(),
+                  );
+
+                  // Try to send order to API
+                  final sendSuccess = await OrderRemoteDatasource().sendOrder(
+                    orderRequestModel,
+                  );
+
+                  // If successfully sent online, mark as synced to avoid duplicate on sync button
+                  if (sendSuccess) {
+                    await ProductLocalDatasource.instance.updateIsSyncOrderById(
+                      orderId,
+                    );
+                    print(
+                      '✅ Order sent to API and marked as synced (id: $orderId)',
+                    );
+                  } else {
+                    print(
+                      '⚠️ Order saved locally but failed to send to API (id: $orderId)',
+                    );
+                  }
+
+                  context.pop();
+                  showDialog(
+                    context: context,
+                    builder: (context) => const PaymentSuccessDialog(),
+                  );
+                },
               );
             },
             builder: (context, state) {

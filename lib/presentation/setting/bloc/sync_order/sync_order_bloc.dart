@@ -29,6 +29,9 @@ class SyncOrderBloc extends Bloc<SyncOrderEvent, SyncOrderState> {
       int uploadSuccessCount = 0;
       int uploadFailedCount = 0;
 
+      // Track transaction times of uploaded orders to avoid re-downloading them
+      Set<String> uploadedTransactionTimes = {};
+
       for (final order in ordersIsSyncZero) {
         print('\n--- Uploading order ID: ${order.id} ---');
 
@@ -53,6 +56,7 @@ class SyncOrderBloc extends Bloc<SyncOrderEvent, SyncOrderState> {
             order.id!,
           );
           uploadSuccessCount++;
+          uploadedTransactionTimes.add(order.transactionTime);
           print('✅ Order ${order.id} uploaded successfully');
         } else {
           uploadFailedCount++;
@@ -69,7 +73,24 @@ class SyncOrderBloc extends Bloc<SyncOrderEvent, SyncOrderState> {
       final apiOrders = await orderRemoteDatasource.getOrders();
 
       int downloadSuccessCount = 0;
+      int skippedCount = 0;
+
       for (final apiOrder in apiOrders) {
+        // Normalize transaction_time format for comparison
+        // Frontend saves: "2026-02-01T14:38:35" (ISO format with T)
+        // Backend returns: "2026-02-01 14:38:35" (format with space)
+        // Convert backend format to frontend format for comparison
+        final normalizedApiTime = apiOrder.transactionTime.replaceAll(' ', 'T');
+
+        // Skip orders that were just uploaded in this sync session
+        if (uploadedTransactionTimes.contains(normalizedApiTime)) {
+          skippedCount++;
+          print(
+            '⏭️ Skipping order (just uploaded): ${apiOrder.transactionTime}',
+          );
+          continue;
+        }
+
         try {
           await ProductLocalDatasource.instance.saveOrderFromApi(
             kasirId: apiOrder.kasirId,
@@ -96,12 +117,44 @@ class SyncOrderBloc extends Bloc<SyncOrderEvent, SyncOrderState> {
 
       print('\n=== DOWNLOAD SUMMARY ===');
       print('Total from API: ${apiOrders.length}');
+      print('Skipped (just uploaded): $skippedCount');
       print('Saved to local: $downloadSuccessCount');
+
+      // STEP 3: Cleanup - Delete local orders that don't exist in API anymore
+      print('\n=== STEP 3: CLEANUP ORPHANED ORDERS ===');
+
+      // Get all API transaction times (normalized)
+      final apiTransactionTimes = apiOrders
+          .map((order) => order.transactionTime.replaceAll(' ', 'T'))
+          .toSet();
+
+      // Get all synced local orders
+      final allLocalOrders = await ProductLocalDatasource.instance
+          .getAllOrder();
+
+      int deletedCount = 0;
+      for (final localOrder in allLocalOrders) {
+        // Only check synced orders (is_sync = 1)
+        // Unsynced orders (is_sync = 0) are pending upload, don't delete
+        if (localOrder.isSync) {
+          if (!apiTransactionTimes.contains(localOrder.transactionTime)) {
+            // Order exists locally but not in API - delete it
+            await ProductLocalDatasource.instance.deleteOrderByTransactionTime(
+              localOrder.transactionTime,
+            );
+            deletedCount++;
+            print('🗑️ Deleted orphaned order: ${localOrder.transactionTime}');
+          }
+        }
+      }
+
+      print('Orphaned orders deleted: $deletedCount');
 
       print('\n=== OVERALL SYNC SUMMARY ===');
       print('Uploaded: $uploadSuccessCount');
       print('Upload Failed: $uploadFailedCount');
       print('Downloaded: $downloadSuccessCount');
+      print('Deleted orphaned: $deletedCount');
 
       if (uploadSuccessCount > 0 || downloadSuccessCount > 0) {
         emit(const SyncOrderState.success());

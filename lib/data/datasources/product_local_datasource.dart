@@ -212,6 +212,26 @@ class ProductLocalDatasource {
     );
   }
 
+  // Delete order by transaction_time (checks for normalized format)
+  Future<void> deleteOrderByTransactionTime(String transactionTime) async {
+    final db = await instance.database;
+    final normalizedTime = transactionTime.replaceAll(' ', 'T');
+
+    // Get order ID first to delete items
+    final orders = await db.query(
+      'orders',
+      columns: ['id'],
+      where: 'transaction_time = ?',
+      whereArgs: [normalizedTime],
+    );
+
+    if (orders.isNotEmpty) {
+      final id = orders.first['id'] as int;
+      await db.delete('order_items', where: 'id_order = ?', whereArgs: [id]);
+      await db.delete('orders', where: 'id = ?', whereArgs: [id]);
+    }
+  }
+
   //get all orders
   Future<List<OrderModel>> getAllOrder() async {
     final db = await instance.database;
@@ -259,11 +279,17 @@ class ProductLocalDatasource {
   }) async {
     final db = await instance.database;
 
-    // Check if order already exists by transaction_time to avoid duplicates
+    // Normalize transaction_time format for duplicate check
+    // Frontend saves: "2026-02-01T14:38:35" (ISO format with T)
+    // Backend returns: "2026-02-01 14:38:35" (format with space)
+    // Convert backend format to frontend format for comparison
+    final normalizedTime = transactionTime.replaceAll(' ', 'T');
+
+    // Check if order already exists by normalized transaction_time to avoid duplicates
     final existing = await db.query(
       'orders',
       where: 'transaction_time = ?',
-      whereArgs: [transactionTime],
+      whereArgs: [normalizedTime],
     );
 
     if (existing.isNotEmpty) {
@@ -273,14 +299,14 @@ class ProductLocalDatasource {
       return;
     }
 
-    // Insert order
+    // Insert order with normalized transaction_time
     int orderId = await db.insert('orders', {
       'nominal': totalPrice,
       'payment_method': paymentMethod,
       'total_item': totalItem,
       'id_kasir': kasirId,
       'nama_kasir': kasirName,
-      'transaction_time': transactionTime,
+      'transaction_time': normalizedTime, // Save in frontend format (with T)
       'is_sync': 1, // Mark as already synced from API
     });
 
