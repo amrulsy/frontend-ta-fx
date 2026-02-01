@@ -25,6 +25,7 @@ class OrderRepository {
   Future<Either<String, String>> syncOrders() async {
     try {
       int uploadSuccessCount = 0;
+      // ignore: unused_local_variable
       int uploadFailedCount = 0;
       int downloadSuccessCount = 0;
 

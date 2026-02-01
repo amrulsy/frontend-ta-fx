@@ -8,8 +8,6 @@ import 'package:project_ta/data/models/request/product_request_model.dart';
 import 'package:project_ta/data/models/request/product_update_request_model.dart';
 import 'package:project_ta/data/models/response/product_response_model.dart';
 import 'package:project_ta/data/models/response/category_response_model.dart';
-import 'package:project_ta/core/components/custom_text_field.dart';
-import 'package:project_ta/core/components/custom_dropdown.dart';
 import 'package:project_ta/core/constants/variables.dart';
 
 class ProductFormPage extends StatefulWidget {
