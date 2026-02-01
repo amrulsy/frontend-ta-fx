@@ -4,6 +4,7 @@ import 'package:project_ta/core/extensions/build_context_ext.dart';
 import 'package:project_ta/core/extensions/int_ext.dart';
 import 'package:project_ta/core/extensions/string_ext.dart';
 import 'package:project_ta/data/datasources/order_remote_datasource.dart';
+import 'package:project_ta/data/datasources/product_remote_datasource.dart';
 import 'package:project_ta/data/datasources/product_local_datasource.dart';
 import 'package:project_ta/data/models/request/order_request_model.dart';
 import 'package:project_ta/presentation/order/bloc/order/order_bloc.dart';
@@ -130,6 +131,7 @@ class _PaymentCashDialogState extends State<PaymentCashDialog> {
                   // Save order to local database first
                   final orderId = await ProductLocalDatasource.instance
                       .saveOrder(orderModel);
+                  // Note: Stock reduction is now handled atomically inside saveOrder
 
                   final OrderRequestModel orderRequestModel = OrderRequestModel(
                     transactionTime: DateFormat(
@@ -163,6 +165,45 @@ class _PaymentCashDialogState extends State<PaymentCashDialog> {
                     print(
                       '✅ Order sent to API and marked as synced (id: $orderId)',
                     );
+
+                    // Sync server stock reduction manually (since backend doesn't auto-reduce)
+                    print('🔄 Syncing stock reduction to server...');
+                    for (var item in data) {
+                      // Check if product has either local ID or server ID
+                      if (item.product.id != null ||
+                          item.product.productId != null) {
+                        try {
+                          final currentStock = item.product.stock;
+                          final qty = item.quantity;
+                          final newStock = (currentStock - qty).clamp(
+                            0,
+                            currentStock,
+                          );
+                          final idUsed =
+                              item.product.productId ?? item.product.id;
+
+                          print(
+                            '   Reducing stock for Product ID: $idUsed (Name: ${item.product.name}) -> New Stock: $newStock',
+                          );
+
+                          final result = await ProductRemoteDatasource()
+                              .updateProductStock(item.product, newStock);
+
+                          result.fold(
+                            (l) => print(
+                              '❌ Failed to update stock for ${item.product.name}: $l',
+                            ),
+                            (r) => print(
+                              '✅ Updated stock for ${item.product.name} on server: $newStock',
+                            ),
+                          );
+                        } catch (e) {
+                          print(
+                            '❌ Exception updating stock for ${item.product.name}: $e',
+                          );
+                        }
+                      }
+                    }
                   } else {
                     print(
                       '⚠️ Order saved locally but failed to send to API (id: $orderId)',

@@ -3,6 +3,7 @@ import 'package:project_ta/data/datasources/product_local_datasource.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'package:project_ta/data/datasources/order_remote_datasource.dart';
+import 'package:project_ta/data/datasources/product_remote_datasource.dart';
 import 'package:project_ta/data/models/request/order_request_model.dart';
 
 part 'sync_order_bloc.freezed.dart';
@@ -58,6 +59,44 @@ class SyncOrderBloc extends Bloc<SyncOrderEvent, SyncOrderState> {
           uploadSuccessCount++;
           uploadedTransactionTimes.add(order.transactionTime);
           print('✅ Order ${order.id} uploaded successfully');
+
+          // Sync Server Stock Reduction (Offline Handling)
+          print('🔄 Syncing stock reduction for Order ${order.id}...');
+          for (final item in orderItems) {
+            try {
+              // item is OrderItemModel (productId, quantity, etc)
+              // Get full product details from local DB to perform update
+              final product = await ProductLocalDatasource.instance
+                  .getProductById(item.productId);
+
+              if (product != null) {
+                // Use current LOCAL stock as the source of truth for server
+                // Because local stock was already reduced when order was created
+                final currentLocalStock = product.stock;
+
+                print(
+                  '   Syncing stock for ${product.name} (ID: ${product.productId}) -> Server becomes: $currentLocalStock',
+                );
+
+                final result = await ProductRemoteDatasource()
+                    .updateProductStock(product, currentLocalStock);
+
+                result.fold(
+                  (l) =>
+                      print('❌ Failed to update stock for ${product.name}: $l'),
+                  (r) => print('✅ Updated stock for ${product.name} on server'),
+                );
+              } else {
+                print(
+                  '⚠️ Product ID ${item.productId} not found locally, skipping stock sync',
+                );
+              }
+            } catch (e) {
+              print(
+                '❌ Exception updating stock sync for Item ${item.productId}: $e',
+              );
+            }
+          }
         } else {
           uploadFailedCount++;
           print('❌ Order ${order.id} failed to upload');
@@ -67,6 +106,46 @@ class SyncOrderBloc extends Bloc<SyncOrderEvent, SyncOrderState> {
       print('\n=== UPLOAD SUMMARY ===');
       print('Success: $uploadSuccessCount');
       print('Failed: $uploadFailedCount');
+
+      // STEP 1.5: FORCE SYNC ALL LOCAL STOCKS TO SERVER
+      // This ensures server stock matches local stock even if previous syncs failed
+      print('\n=== STEP 1.5: FORCE SYNC ALL STOCKS ===');
+      try {
+        final allLocalProducts = await ProductLocalDatasource.instance
+            .getAllProduct();
+        print('Total products to check: ${allLocalProducts.length}');
+
+        int stockSyncCount = 0;
+        for (final product in allLocalProducts) {
+          // Only sync if product has Server ID
+          if (product.productId != null || product.id != null) {
+            final serverId =
+                product.productId ??
+                product.id; // Use logic consistent with RemoteDS
+            // Skip if serverId is likely invalid (e.g. 0 or very small if conflicting with local)
+            // But assuming remote DS handles correct ID selection.
+
+            // Optimization: We could check if stock isDirty? No flag available.
+            // Just sync all.
+
+            final result = await ProductRemoteDatasource().updateProductStock(
+              product,
+              product.stock,
+            );
+
+            result.fold(
+              (l) => print('   ❌ Failed sync stock for ${product.name}: $l'),
+              (r) {
+                stockSyncCount++;
+                // print('   ✅ Synced stock for ${product.name} -> ${product.stock}');
+              },
+            );
+          }
+        }
+        print('Synced stock for $stockSyncCount products');
+      } catch (e) {
+        print('❌ Exception during Force Stock Sync: $e');
+      }
 
       // STEP 2: Download orders from API to local
       print('\n=== STEP 2: DOWNLOADING ORDERS FROM API ===');

@@ -119,11 +119,42 @@ class ProductLocalDatasource {
   //save order
   Future<int> saveOrder(OrderModel order) async {
     final db = await instance.database;
-    int id = await db.insert('orders', order.toMapForLocal());
-    for (var orderItem in order.orders) {
-      await db.insert('order_items', orderItem.toMapForLocal(id));
-    }
-    return id;
+
+    return await db.transaction((txn) async {
+      int id = await txn.insert('orders', order.toMapForLocal());
+
+      for (var orderItem in order.orders) {
+        await txn.insert('order_items', orderItem.toMapForLocal(id));
+
+        // Reduce stock atomically inside the transaction
+        final productId = orderItem.product.productId;
+        if (productId != null) {
+          final List<Map<String, dynamic>> result = await txn.query(
+            tableProducts,
+            where: 'product_id = ?',
+            whereArgs: [productId],
+          );
+
+          if (result.isNotEmpty) {
+            final currentStock = result.first['stock'] as int;
+            final newStock = (currentStock - orderItem.quantity).clamp(
+              0,
+              currentStock,
+            );
+            await txn.update(
+              tableProducts,
+              {'stock': newStock},
+              where: 'product_id = ?',
+              whereArgs: [productId],
+            );
+            print(
+              '📦 Atomic stock reduction for product $productId: $currentStock -> $newStock',
+            );
+          }
+        }
+      }
+      return id;
+    });
   }
 
   //save draft order
@@ -375,5 +406,45 @@ class ProductLocalDatasource {
     }
 
     return Product.fromMap(result.first);
+  }
+
+  // Reduce stock for a product after checkout
+  Future<void> reduceProductStock(int productId, int quantity) async {
+    final db = await instance.database;
+
+    // Get current stock
+    final result = await db.query(
+      tableProducts,
+      where: 'product_id = ?',
+      whereArgs: [productId],
+    );
+
+    if (result.isNotEmpty) {
+      final currentStock = result.first['stock'] as int;
+      final newStock = (currentStock - quantity).clamp(0, currentStock);
+
+      await db.update(
+        tableProducts,
+        {'stock': newStock},
+        where: 'product_id = ?',
+        whereArgs: [productId],
+      );
+
+      print(
+        '📦 Stock reduced for product $productId: $currentStock -> $newStock',
+      );
+    }
+  }
+
+  // Reduce stock for multiple products (after checkout)
+  Future<void> reduceMultipleProductStock(
+    List<Map<String, dynamic>> items,
+  ) async {
+    for (var item in items) {
+      await reduceProductStock(
+        item['productId'] as int,
+        item['quantity'] as int,
+      );
+    }
   }
 }

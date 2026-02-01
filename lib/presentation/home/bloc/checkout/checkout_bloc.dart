@@ -17,11 +17,32 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     on<_AddCheckout>((event, emit) {
       var currentStates = state as _Success;
       List<OrderItem> newCheckout = [...currentStates.products];
+
+      // Check if product is out of stock
+      if (event.product.stock <= 0) {
+        // Don't add product if out of stock, just emit current state
+        emit(
+          _Success(
+            newCheckout,
+            currentStates.totalQuantity,
+            currentStates.totalPrice,
+            currentStates.draftName,
+          ),
+        );
+        return;
+      }
+
       emit(const _Loading());
       if (newCheckout.any((element) => element.product == event.product)) {
-        var index = newCheckout
-            .indexWhere((element) => element.product == event.product);
-        newCheckout[index].quantity++;
+        var index = newCheckout.indexWhere(
+          (element) => element.product == event.product,
+        );
+
+        // Check if adding one more would exceed available stock
+        if (newCheckout[index].quantity < event.product.stock) {
+          newCheckout[index].quantity++;
+        }
+        // If quantity would exceed stock, don't increment
       } else {
         newCheckout.add(OrderItem(product: event.product, quantity: 1));
       }
@@ -34,8 +55,14 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
         totalPrice += element.quantity * element.product.price;
       }
 
-      emit(_Success(
-          newCheckout, totalQuantity, totalPrice, currentStates.draftName));
+      emit(
+        _Success(
+          newCheckout,
+          totalQuantity,
+          totalPrice,
+          currentStates.draftName,
+        ),
+      );
     });
 
     on<_RemoveCheckout>((event, emit) {
@@ -43,8 +70,9 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
       List<OrderItem> newCheckout = [...currentStates.products];
       emit(const _Loading());
       if (newCheckout.any((element) => element.product == event.product)) {
-        var index = newCheckout
-            .indexWhere((element) => element.product == event.product);
+        var index = newCheckout.indexWhere(
+          (element) => element.product == event.product,
+        );
         if (newCheckout[index].quantity > 1) {
           newCheckout[index].quantity--;
         } else {
@@ -60,8 +88,14 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
         totalPrice += element.quantity * element.product.price;
       }
 
-      emit(_Success(
-          newCheckout, totalQuantity, totalPrice, currentStates.draftName));
+      emit(
+        _Success(
+          newCheckout,
+          totalQuantity,
+          totalPrice,
+          currentStates.draftName,
+        ),
+      );
     });
 
     //remove product
@@ -70,8 +104,9 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
       List<OrderItem> newCheckout = [...currentStates.products];
       emit(const _Loading());
       if (newCheckout.any((element) => element.product == event.product)) {
-        var index = newCheckout
-            .indexWhere((element) => element.product == event.product);
+        var index = newCheckout.indexWhere(
+          (element) => element.product == event.product,
+        );
         newCheckout.removeAt(index);
       }
 
@@ -83,8 +118,14 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
         totalPrice += element.quantity * element.product.price;
       }
 
-      emit(_Success(
-          newCheckout, totalQuantity, totalPrice, currentStates.draftName));
+      emit(
+        _Success(
+          newCheckout,
+          totalQuantity,
+          totalPrice,
+          currentStates.draftName,
+        ),
+      );
     });
 
     on<_Started>((event, emit) {
@@ -97,17 +138,17 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
       emit(const _Loading());
       final draftOrder = DraftOrderModel(
         orders: currentStates.products
-            .map((e) => DraftOrderItem(
-                  product: e.product,
-                  quantity: e.quantity,
-                ))
+            .map(
+              (e) => DraftOrderItem(product: e.product, quantity: e.quantity),
+            )
             .toList(),
         totalQuantity: currentStates.totalQuantity,
         totalPrice: currentStates.totalPrice,
         tableNumber: event.tableNumber,
         draftName: event.draftName,
-        transactionTime:
-            DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
+        transactionTime: DateFormat(
+          'yyyy-MM-dd HH:mm:ss',
+        ).format(DateTime.now()),
       );
       ProductLocalDatasource.instance.saveDraftOrder(draftOrder);
       emit(const _SavedDraftOrder());
@@ -117,13 +158,16 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     on<_LoadDraftOrder>((event, emit) async {
       emit(const _Loading());
       final draftOrder = event.data;
-      emit(_Success(
+      emit(
+        _Success(
           draftOrder.orders
               .map((e) => OrderItem(product: e.product, quantity: e.quantity))
               .toList(),
           draftOrder.totalQuantity,
           draftOrder.totalPrice,
-          draftOrder.draftName));
+          draftOrder.draftName,
+        ),
+      );
     });
   }
 }

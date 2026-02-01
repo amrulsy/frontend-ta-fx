@@ -149,4 +149,25 @@ class ProductRemoteDatasource {
       return left(response.body);
     }
   }
+
+  // Update product stock only
+  Future<Either<String, ProductCrudResponseModel>> updateProductStock(
+    Product product,
+    int newStock,
+  ) async {
+    final requestModel = ProductUpdateRequestModel(
+      name: product.name,
+      price: product.price,
+      stock: newStock,
+      categoryId: product.categoryId,
+      isBestSeller: product.isBestSeller ? 1 : 0,
+      description: product.description,
+      // image is optional, if null backend should keep existing image
+      image: null,
+    );
+
+    // Use productId (server ID) if available (from local DB), otherwise use id (from API)
+    final idToUpdate = product.productId ?? product.id!;
+    return updateProduct(idToUpdate, requestModel);
+  }
 }

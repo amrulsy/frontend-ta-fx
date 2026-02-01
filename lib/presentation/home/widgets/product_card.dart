@@ -12,100 +12,175 @@ import '../../../core/constants/colors.dart';
 class ProductCard extends StatelessWidget {
   final Product data;
 
-  const ProductCard({
-    super.key,
-    required this.data,
-  });
+  const ProductCard({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
+    final bool isOutOfStock = data.stock <= 0;
+
     return Stack(
       children: [
         GestureDetector(
-          onTap: () {
-            context.read<CheckoutBloc>().add(CheckoutEvent.addCheckout(data));
-          },
-          child: Container(
-            padding: const EdgeInsets.all(16.0),
-            decoration: ShapeDecoration(
-              shape: RoundedRectangleBorder(
-                side: const BorderSide(width: 1, color: AppColors.card),
-                borderRadius: BorderRadius.circular(20),
+          onTap: isOutOfStock
+              ? null
+              : () {
+                  context.read<CheckoutBloc>().add(
+                    CheckoutEvent.addCheckout(data),
+                  );
+                },
+          child: Opacity(
+            opacity: isOutOfStock ? 0.5 : 1.0,
+            child: Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: ShapeDecoration(
+                shape: RoundedRectangleBorder(
+                  side: BorderSide(
+                    width: 1,
+                    color: isOutOfStock ? AppColors.grey : AppColors.card,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                color: isOutOfStock
+                    ? AppColors.disabled.withOpacity(0.2)
+                    : AppColors.white,
               ),
-              color: AppColors.white,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Spacer(),
-                Container(
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.disabled.withOpacity(0.4),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.all(Radius.circular(50.0)),
-                    child: CachedNetworkImage(
-                      height: 50,
-                      fit: BoxFit.fitWidth,
-                      imageUrl: '${Variables.imageBaseUrl}${data.image}',
-                      placeholder: (context, url) =>
-                          const Center(child: CircularProgressIndicator()),
-                      errorWidget: (context, url, error) => const Icon(
-                        Icons.bike_scooter,
-                        size: 50,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Spacer(),
+                  Container(
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.all(12.0),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.disabled.withOpacity(0.4),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.all(
+                        Radius.circular(50.0),
+                      ),
+                      child: CachedNetworkImage(
+                        height: 50,
+                        fit: BoxFit.fitWidth,
+                        imageUrl: '${Variables.imageBaseUrl}${data.image}',
+                        placeholder: (context, url) =>
+                            const Center(child: CircularProgressIndicator()),
+                        errorWidget: (context, url, error) =>
+                            const Icon(Icons.bike_scooter, size: 50),
                       ),
                     ),
                   ),
-                ),
-                const Spacer(),
-                Text(
-                  data.name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                  const Spacer(),
+                  Text(
+                    data.name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SpaceHeight(8.0),
-                Text(
-                  data.category,
-                  style: const TextStyle(
-                    color: AppColors.grey,
-                    fontSize: 12,
-                  ),
-                ),
-                const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        data.price.currencyFormatRp,
+                  const SpaceHeight(8.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        data.category,
                         style: const TextStyle(
-                          fontWeight: FontWeight.w700,
+                          color: AppColors.grey,
+                          fontSize: 12,
                         ),
                       ),
-                    ),
-                    Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                          color: AppColors.primary,
+                      // Stock indicator
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6.0,
+                          vertical: 2.0,
                         ),
-                        child: const Icon(
-                          Icons.add,
+                        decoration: BoxDecoration(
+                          color: isOutOfStock
+                              ? Colors.red.shade100
+                              : (data.stock <= 5
+                                    ? Colors.amber.shade100
+                                    : Colors.green.shade100),
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: Text(
+                          isOutOfStock ? 'Habis' : 'Stok: ${data.stock}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: isOutOfStock
+                                ? Colors.red.shade700
+                                : (data.stock <= 5
+                                      ? Colors.amber.shade800
+                                      : Colors.green.shade700),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          data.price.currencyFormatRp,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          borderRadius: const BorderRadius.all(
+                            Radius.circular(10.0),
+                          ),
+                          color: isOutOfStock
+                              ? AppColors.grey
+                              : AppColors.primary,
+                        ),
+                        child: Icon(
+                          isOutOfStock ? Icons.remove_shopping_cart : Icons.add,
                           color: Colors.white,
-                        )),
-                  ],
-                ),
-              ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
+        // Out of stock overlay
+        if (isOutOfStock)
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12.0,
+                    vertical: 6.0,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade700,
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: const Text(
+                    'STOK HABIS',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         BlocBuilder<CheckoutBloc, CheckoutState>(
           builder: (context, state) {
             return state.maybeWhen(
@@ -116,26 +191,28 @@ class ProductCard extends StatelessWidget {
                 }
                 return products.any((element) => element.product == data)
                     ? products
-                                .firstWhere(
-                                    (element) => element.product == data)
-                                .quantity >
-                            0
-                        ? Positioned(
-                            top: 8,
-                            right: 8,
-                            child: CircleAvatar(
-                              backgroundColor: AppColors.primary,
-                              child: Text(
-                                products
-                                    .firstWhere(
-                                        (element) => element.product == data)
-                                    .quantity
-                                    .toString(),
-                                style: const TextStyle(color: Colors.white),
+                                  .firstWhere(
+                                    (element) => element.product == data,
+                                  )
+                                  .quantity >
+                              0
+                          ? Positioned(
+                              top: 8,
+                              right: 8,
+                              child: CircleAvatar(
+                                backgroundColor: AppColors.primary,
+                                child: Text(
+                                  products
+                                      .firstWhere(
+                                        (element) => element.product == data,
+                                      )
+                                      .quantity
+                                      .toString(),
+                                  style: const TextStyle(color: Colors.white),
+                                ),
                               ),
-                            ),
-                          )
-                        : const SizedBox()
+                            )
+                          : const SizedBox()
                     : const SizedBox();
               },
             );
