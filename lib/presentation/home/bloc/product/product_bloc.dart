@@ -15,13 +15,23 @@ part 'product_state.dart';
 class ProductBloc extends Bloc<ProductEvent, ProductState> {
   final ProductRemoteDatasource _productRemoteDatasource;
   List<Product> products = [];
+  // Helper to sort products: Available first, Out of Stock last
+  void _sortProducts(List<Product> list) {
+    list.sort((a, b) {
+      if (a.stock > 0 && b.stock == 0) return -1; // a comes first
+      if (a.stock == 0 && b.stock > 0) return 1; // b comes first
+      return 0; // maintain original order otherwise
+    });
+  }
+
   ProductBloc(this._productRemoteDatasource) : super(const _Initial()) {
     on<_Fetch>((event, emit) async {
       emit(const ProductState.loading());
       final response = await _productRemoteDatasource.getProducts();
       response.fold((l) => emit(ProductState.error(l)), (r) {
         products = r.data;
-        emit(ProductState.success(r.data));
+        _sortProducts(products); // Sort
+        emit(ProductState.success(products));
       });
     });
 
@@ -30,7 +40,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       final localPproducts = await ProductLocalDatasource.instance
           .getAllProduct();
       products = localPproducts;
-
+      _sortProducts(products); // Sort
       emit(ProductState.success(products));
     });
 
@@ -38,11 +48,12 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       emit(const ProductState.loading());
 
       final newProducts = event.category == 'all'
-          ? products
+          ? List<Product>.from(products)
           : products
                 .where((element) => element.category == event.category)
                 .toList();
 
+      _sortProducts(newProducts); // Sort
       emit(ProductState.success(newProducts));
     });
 
@@ -57,13 +68,12 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         image: event.image,
       );
       final response = await _productRemoteDatasource.addProduct(requestData);
-      // products.add(newProduct);
+
       response.fold((l) => emit(ProductState.error(l)), (r) {
         products.add(r.data);
+        _sortProducts(products); // Sort
         emit(ProductState.success(products));
       });
-
-      emit(ProductState.success(products));
     });
 
     on<_SearchProduct>((event, emit) async {
@@ -75,12 +85,13 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
           )
           .toList();
 
+      _sortProducts(newProducts); // Sort
       emit(ProductState.success(newProducts));
     });
 
     on<_FetchAllFromState>((event, emit) async {
       emit(const ProductState.loading());
-
+      _sortProducts(products); // Sort (just in case)
       emit(ProductState.success(products));
     });
   }
