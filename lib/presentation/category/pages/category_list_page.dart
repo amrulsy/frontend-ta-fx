@@ -23,6 +23,7 @@ class _CategoryListPageState extends State<CategoryListPage> {
     _loadCategories();
   }
 
+  // Load daftar kategori dari API remote
   Future<void> _loadCategories() async {
     setState(() {
       isLoading = true;
@@ -30,7 +31,7 @@ class _CategoryListPageState extends State<CategoryListPage> {
       isOffline = false;
     });
 
-    // Check connectivity first
+    // Cek koneksi internet terlebih dahulu
     final isConnected = await ConnectivityHelper().isConnected();
     if (!isConnected) {
       setState(() {
@@ -64,20 +65,21 @@ class _CategoryListPageState extends State<CategoryListPage> {
     }
   }
 
+  // Konfirmasi dan hapus kategori dari database
   Future<void> _deleteCategory(int categoryId) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Category'),
-        content: const Text('Are you sure you want to delete this category?'),
+        title: const Text('Hapus Kategori'),
+        content: const Text('Apakah Anda yakin ingin menghapus kategori ini?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: const Text('Batal'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: const Text('Hapus'),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
           ),
         ],
@@ -99,7 +101,7 @@ class _CategoryListPageState extends State<CategoryListPage> {
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(response.message)));
-            _loadCategories(); // Reload the list
+            _loadCategories(); // Reload daftar kategori
           },
         );
       } catch (e) {
@@ -114,7 +116,7 @@ class _CategoryListPageState extends State<CategoryListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Categories', textAlign: TextAlign.center),
+        title: const Text('Kategori', textAlign: TextAlign.center),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -137,14 +139,14 @@ class _CategoryListPageState extends State<CategoryListPage> {
                   const Icon(Icons.wifi_off, size: 80, color: Colors.orange),
                   const SizedBox(height: 24),
                   const Text(
-                    'No Internet Connection',
+                    'Tidak Ada Koneksi Internet',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 32),
                     child: Text(
-                      'Please connect to the internet to access category management.',
+                      'Silakan hubungkan ke internet untuk mengakses manajemen kategori.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.grey),
                     ),
@@ -153,7 +155,7 @@ class _CategoryListPageState extends State<CategoryListPage> {
                   ElevatedButton.icon(
                     onPressed: _loadCategories,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Try Again'),
+                    label: const Text('Coba Lagi'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
@@ -187,7 +189,7 @@ class _CategoryListPageState extends State<CategoryListPage> {
                   ElevatedButton.icon(
                     onPressed: _loadCategories,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
+                    label: const Text('Coba Lagi'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
@@ -208,14 +210,14 @@ class _CategoryListPageState extends State<CategoryListPage> {
                     size: 64,
                     color: Colors.grey,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   Text(
-                    'No categories found',
+                    'Tidak ada kategori ditemukan',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Add your first category to get started',
+                    'Tambahkan kategori pertama Anda untuk memulai',
                     style: Theme.of(
                       context,
                     ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
@@ -250,7 +252,7 @@ class _CategoryListPageState extends State<CategoryListPage> {
                       title: Text(
                         category.name.isNotEmpty
                             ? category.name
-                            : 'Unnamed Category',
+                            : 'Kategori Tanpa Nama',
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       subtitle: Text('ID: ${category.id}'),
@@ -289,7 +291,7 @@ class _CategoryListPageState extends State<CategoryListPage> {
                                 Icon(Icons.delete, color: Colors.red),
                                 SizedBox(width: 8),
                                 Text(
-                                  'Delete',
+                                  'Hapus',
                                   style: TextStyle(color: Colors.red),
                                 ),
                               ],
@@ -305,12 +307,12 @@ class _CategoryListPageState extends State<CategoryListPage> {
       floatingActionButton: !isOffline
           ? FloatingActionButton(
               onPressed: () async {
-                // Check connectivity before navigating
+                // Cek konektivitas sebelum navigasi
                 final isConnected = await ConnectivityHelper().isConnected();
                 if (!isConnected) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('No internet connection'),
+                      content: Text('Tidak ada koneksi internet'),
                       backgroundColor: Colors.orange,
                     ),
                   );

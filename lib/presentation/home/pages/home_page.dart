@@ -29,8 +29,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
+    // Load produk dan kategori dari database lokal saat halaman pertama kali dibuka
     context.read<ProductBloc>().add(const ProductEvent.fetchLocal());
     context.read<CategoryBloc>().add(const CategoryEvent.getCategoriesLocal());
+    // Koneksi ke printer yang tersimpan
     AuthLocalDatasource().getPrinter().then((value) async {
       if (value.isNotEmpty) {
         await PrintBluetoothThermal.connect(macPrinterAddress: value);
@@ -39,6 +41,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
   }
 
+  // Fungsi untuk handle ketika kategori dipilih
   void onCategoryTap(int index) {
     searchController.clear();
     setState(() {
@@ -46,6 +49,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // Widget badge untuk menampilkan status koneksi internet (Online/Offline)
   Widget _buildStatusBadge(bool isOnline) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -143,16 +147,15 @@ class _HomePageState extends State<HomePage> {
                 },
                 loadedLocal: (categories) {
                   return SizedBox(
-                    height: 100,
+                    height: 120,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: [
                         SizedBox(
-                          height: 80,
                           width: 90,
                           child: MenuButton(
                             iconPath: Assets.icons.allCategories.path,
-                            label: 'All',
+                            label: 'Semua',
                             isActive: currentIndex == 0,
                             onPressed: () {
                               onCategoryTap(0);
@@ -166,7 +169,6 @@ class _HomePageState extends State<HomePage> {
                         ...categories
                             .map(
                               (e) => SizedBox(
-                                height: 80,
                                 width: 90,
                                 child: MenuButton(
                                   iconPath: Assets.icons.allCategories.path,

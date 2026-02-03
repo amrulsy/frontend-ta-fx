@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'spaces.dart';
 
+// Widget custom text field yang reusable dengan label dan styling konsisten
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
@@ -30,10 +31,7 @@ class CustomTextField extends StatelessWidget {
         if (showLabel) ...[
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
           ),
           const SpaceHeight(12.0),
         ],

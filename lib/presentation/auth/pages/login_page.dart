@@ -22,6 +22,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
+    // Bersihkan controller saat widget di-dispose untuk menghindari memory leak
     usernameController.dispose();
     passwordController.dispose();
     super.dispose();
@@ -56,7 +57,7 @@ class _LoginPageState extends State<LoginPage> {
           const SpaceHeight(8.0),
           const Center(
             child: Text(
-              'Login to your account',
+              'Masuk ke akun Anda',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
@@ -69,15 +70,17 @@ class _LoginPageState extends State<LoginPage> {
           const SpaceHeight(12.0),
           CustomTextField(
             controller: passwordController,
-            label: 'Password',
+            label: 'Kata Sandi',
             obscureText: true,
           ),
           const SpaceHeight(24.0),
+          // Bloc listener untuk menangani hasil login (success/error)
           BlocListener<LoginBloc, LoginState>(
             listener: (context, state) {
               state.maybeWhen(
                 orElse: () {},
                 success: (authResponseModel) {
+                  // Navigasi ke dashboard setelah login berhasil
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
@@ -86,6 +89,7 @@ class _LoginPageState extends State<LoginPage> {
                   );
                 },
                 error: (message) {
+                  // Tampilkan pesan error jika login gagal
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(message),
@@ -101,6 +105,7 @@ class _LoginPageState extends State<LoginPage> {
                   orElse: () {
                     return Button.filled(
                       onPressed: () {
+                        // Trigger event login dengan email dan password
                         context.read<LoginBloc>().add(
                           LoginEvent.login(
                             email: usernameController.text,
@@ -108,7 +113,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         );
                       },
-                      label: 'Login',
+                      label: 'Masuk',
                     );
                   },
                   loading: () {

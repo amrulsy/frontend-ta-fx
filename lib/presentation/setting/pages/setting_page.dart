@@ -34,6 +34,7 @@ class _SettingPageState extends State<SettingPage> {
     _loadCurrentUser();
   }
 
+  // Load data user yang sedang login untuk cek role dan permission
   Future<void> _loadCurrentUser() async {
     try {
       final authData = await AuthLocalDatasource().getAuthData();
@@ -63,7 +64,7 @@ class _SettingPageState extends State<SettingPage> {
         ),
         centerTitle: true,
         title: const Text(
-          'Settings',
+          'Pengaturan',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
@@ -74,11 +75,12 @@ class _SettingPageState extends State<SettingPage> {
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Row(
               children: [
+                // Menu Setting Product hanya untuk admin
                 if (currentUser?.roles == 'admin')
                   Flexible(
                     child: MenuButton(
                       iconPath: Assets.images.manageProduct.path,
-                      label: 'Setting Product',
+                      label: 'Pengaturan Produk',
                       onPressed: () => context.push(const ManageProductPage()),
                       isImage: true,
                     ),
@@ -87,7 +89,7 @@ class _SettingPageState extends State<SettingPage> {
                 Flexible(
                   child: MenuButton(
                     iconPath: Assets.images.managePrinter.path,
-                    label: 'Setting Printer',
+                    label: 'Pengaturan Printer',
                     onPressed: () {
                       context.push(const ManagePrinterPage());
                     },
@@ -105,7 +107,7 @@ class _SettingPageState extends State<SettingPage> {
                 Flexible(
                   child: MenuButton(
                     iconPath: Assets.images.sync.path,
-                    label: 'Sync Data',
+                    label: 'Sinkronkan Data',
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -117,6 +119,7 @@ class _SettingPageState extends State<SettingPage> {
                     isImage: true,
                   ),
                 ),
+                // Menu User Management hanya untuk admin
                 if (currentUser?.roles == 'admin') ...[
                   const SpaceWidth(15.0),
                   Flexible(
@@ -125,7 +128,7 @@ class _SettingPageState extends State<SettingPage> {
                           .images
                           .manageProduct
                           .path, // Using existing icon
-                      label: 'User Management',
+                      label: 'Manajemen User',
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -149,7 +152,7 @@ class _SettingPageState extends State<SettingPage> {
                 Flexible(
                   child: MenuButton(
                     iconPath: Assets.images.report.path,
-                    label: 'Report',
+                    label: 'Laporan',
                     onPressed: () => context.push(const ReportPage()),
                     isImage: true,
                   ),
@@ -165,7 +168,9 @@ class _SettingPageState extends State<SettingPage> {
                 state.maybeMap(
                   orElse: () {},
                   success: (_) {
+                    // Hapus data auth dari local storage
                     AuthLocalDatasource().removeAuthData();
+                    // Navigasi ke halaman login
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
@@ -185,7 +190,7 @@ class _SettingPageState extends State<SettingPage> {
                     context.read<LogoutBloc>().add(const LogoutEvent.logout());
                   },
                   child: const Text(
-                    'Logout',
+                    'Keluar',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,

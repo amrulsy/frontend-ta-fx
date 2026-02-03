@@ -49,11 +49,13 @@ class MenuButton extends StatelessWidget {
           children: [
             const SpaceHeight(8.0),
             isImage
-                ? Image.asset(iconPath,
+                ? Image.asset(
+                    iconPath,
                     width: size,
                     height: size,
                     fit: BoxFit.contain,
-                    color: isActive ? AppColors.white : AppColors.primary)
+                    color: isActive ? AppColors.white : AppColors.primary,
+                  )
                 : SvgPicture.asset(
                     iconPath,
                     colorFilter: ColorFilter.mode(
@@ -64,6 +66,9 @@ class MenuButton extends StatelessWidget {
             const SpaceHeight(8.0),
             Text(
               label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: isActive ? AppColors.white : AppColors.primary,
                 fontSize: 12,

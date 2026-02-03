@@ -26,6 +26,7 @@ class _ProductListPageState extends State<ProductListPage> {
     _loadProducts();
   }
 
+  // Load daftar produk dari API remote
   Future<void> _loadProducts() async {
     setState(() {
       isLoading = true;
@@ -33,7 +34,7 @@ class _ProductListPageState extends State<ProductListPage> {
       isOffline = false;
     });
 
-    // Check connectivity first
+    // Cek koneksi internet terlebih dahulu
     final isConnected = await ConnectivityHelper().isConnected();
     if (!isConnected) {
       setState(() {
@@ -67,20 +68,21 @@ class _ProductListPageState extends State<ProductListPage> {
     }
   }
 
+  // Konfirmasi dan hapus produk dari database
   Future<void> _deleteProduct(int productId) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Product'),
-        content: const Text('Are you sure you want to delete this product?'),
+        title: const Text('Hapus Produk'),
+        content: const Text('Apakah Anda yakin ingin menghapus produk ini?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: const Text('Batal'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: const Text('Hapus'),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
           ),
         ],
@@ -100,7 +102,7 @@ class _ProductListPageState extends State<ProductListPage> {
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(response.message)));
-            _loadProducts(); // Reload the list
+            _loadProducts(); // Reload daftar produk
           },
         );
       } catch (e) {
@@ -115,7 +117,7 @@ class _ProductListPageState extends State<ProductListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Products', textAlign: TextAlign.center),
+        title: const Text('Produk', textAlign: TextAlign.center),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -135,14 +137,14 @@ class _ProductListPageState extends State<ProductListPage> {
                   const Icon(Icons.wifi_off, size: 80, color: Colors.orange),
                   const SizedBox(height: 24),
                   const Text(
-                    'No Internet Connection',
+                    'Tidak Ada Koneksi Internet',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 32),
                     child: Text(
-                      'Please connect to the internet to access product management.',
+                      'Silakan hubungkan ke internet untuk mengakses manajemen produk.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.grey),
                     ),
@@ -151,7 +153,7 @@ class _ProductListPageState extends State<ProductListPage> {
                   ElevatedButton.icon(
                     onPressed: _loadProducts,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Try Again'),
+                    label: const Text('Coba Lagi'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
@@ -177,7 +179,7 @@ class _ProductListPageState extends State<ProductListPage> {
               ),
             )
           : products.isEmpty
-          ? const Center(child: Text('No products found'))
+          ? const Center(child: Text('Tidak ada produk ditemukan'))
           : RefreshIndicator(
               onRefresh: _loadProducts,
               child: ListView.builder(
@@ -219,10 +221,10 @@ class _ProductListPageState extends State<ProductListPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Price: ${CurrencyFormatter.formatToIDR(product.price)}',
+                            'Harga: ${CurrencyFormatter.formatToIDR(product.price)}',
                           ),
-                          Text('Stock: ${product.stock}'),
-                          Text('Category: ${product.category}'),
+                          Text('Stok: ${product.stock}'),
+                          Text('Kategori: ${product.category}'),
                         ],
                       ),
                       trailing: PopupMenuButton<String>(
@@ -258,7 +260,7 @@ class _ProductListPageState extends State<ProductListPage> {
                               children: [
                                 Icon(Icons.visibility),
                                 SizedBox(width: 8),
-                                Text('View'),
+                                Text('Lihat'),
                               ],
                             ),
                           ),
@@ -279,7 +281,7 @@ class _ProductListPageState extends State<ProductListPage> {
                                 Icon(Icons.delete, color: Colors.red),
                                 SizedBox(width: 8),
                                 Text(
-                                  'Delete',
+                                  'Hapus',
                                   style: TextStyle(color: Colors.red),
                                 ),
                               ],
@@ -295,12 +297,12 @@ class _ProductListPageState extends State<ProductListPage> {
       floatingActionButton: !isOffline
           ? FloatingActionButton(
               onPressed: () async {
-                // Check connectivity before navigating
+                // Cek konektivitas sebelum navigasi
                 final isConnected = await ConnectivityHelper().isConnected();
                 if (!isConnected) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('No internet connection'),
+                      content: Text('Tidak ada koneksi internet'),
                       backgroundColor: Colors.orange,
                     ),
                   );

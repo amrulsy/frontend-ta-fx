@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/colors.dart';
 
+// Widget input field untuk fitur pencarian produk
 class SearchInput extends StatelessWidget {
   final TextEditingController controller;
   final Function(String value)? onChanged;
@@ -26,11 +27,8 @@ class SearchInput extends StatelessWidget {
         controller: controller,
         onChanged: onChanged,
         decoration: InputDecoration(
-          hintText: 'Search...',
-          prefixIcon: const Icon(
-            Icons.search,
-            color: AppColors.primary,
-          ),
+          hintText: 'Cari...',
+          prefixIcon: const Icon(Icons.search, color: AppColors.primary),
           contentPadding: const EdgeInsets.all(16.0),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),

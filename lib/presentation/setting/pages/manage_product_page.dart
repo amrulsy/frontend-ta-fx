@@ -13,14 +13,17 @@ class ManageProductPage extends StatefulWidget {
 }
 
 class _ManageProductPageState extends State<ManageProductPage> {
+  // Status koneksi internet untuk mengaktifkan/menonaktifkan fitur
   bool isOnline = true;
 
   @override
   void initState() {
     super.initState();
+    // Cek konektivitas saat halaman pertama kali dibuka
     _checkConnectivity();
   }
 
+  // Fungsi untuk memeriksa status koneksi internet
   Future<void> _checkConnectivity() async {
     final connected = await ConnectivityHelper().isConnected();
     setState(() {
@@ -28,6 +31,7 @@ class _ManageProductPageState extends State<ManageProductPage> {
     });
   }
 
+  // Fungsi navigasi dengan pengecekan koneksi internet terlebih dahulu
   Future<void> _navigateWithConnectivityCheck(
     BuildContext context,
     Widget page,
@@ -40,6 +44,7 @@ class _ManageProductPageState extends State<ManageProductPage> {
     Navigator.push(context, MaterialPageRoute(builder: (context) => page));
   }
 
+  // Tampilkan dialog peringatan ketika tidak ada koneksi internet
   void _showOfflineDialog() {
     showDialog(
       context: context,
@@ -50,14 +55,14 @@ class _ManageProductPageState extends State<ManageProductPage> {
             SizedBox(width: 8),
             Flexible(
               child: Text(
-                'No Internet Connection',
+                'Tidak Ada Koneksi Internet',
                 overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
         content: const Text(
-          'Please connect to the internet to manage products and categories.',
+          'Silakan hubungkan ke internet untuk mengelola produk dan kategori.',
           style: TextStyle(fontSize: 14),
         ),
         actions: [
@@ -81,7 +86,7 @@ class _ManageProductPageState extends State<ManageProductPage> {
           },
         ),
         title: const Text(
-          'Management',
+          'Manajemen',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         centerTitle: true,
@@ -92,12 +97,12 @@ class _ManageProductPageState extends State<ManageProductPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'Choose what you want to manage:',
+              'Pilih apa yang ingin Anda kelola:',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 24),
 
-            // Product Management Card
+            // Card navigasi untuk manajemen produk
             Card(
               elevation: 4,
               child: InkWell(
@@ -130,7 +135,7 @@ class _ManageProductPageState extends State<ManageProductPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Product Management',
+                              'Manajemen Produk',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -138,7 +143,7 @@ class _ManageProductPageState extends State<ManageProductPage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Manage your products, add new items, edit existing ones, and delete products.',
+                              'Kelola produk Anda, tambah item baru, edit yang ada, dan hapus produk.',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[600],
@@ -155,7 +160,7 @@ class _ManageProductPageState extends State<ManageProductPage> {
             ),
             const SizedBox(height: 16),
 
-            // Category Management Card
+            // Card navigasi untuk manajemen kategori
             Card(
               elevation: 4,
               child: InkWell(
@@ -188,7 +193,7 @@ class _ManageProductPageState extends State<ManageProductPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Category Management',
+                              'Manajemen Kategori',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -196,7 +201,7 @@ class _ManageProductPageState extends State<ManageProductPage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Manage product categories, create new categories, and organize your products.',
+                              'Kelola kategori produk, buat kategori baru, dan organisir produk Anda.',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[600],
@@ -213,9 +218,9 @@ class _ManageProductPageState extends State<ManageProductPage> {
             ),
             const SizedBox(height: 24),
 
-            // Quick Actions
+            // Tombol aksi cepat
             const Text(
-              'Quick Actions:',
+              'Aksi Cepat:',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
@@ -231,9 +236,9 @@ class _ManageProductPageState extends State<ManageProductPage> {
                               const ProductFormPage(),
                             );
                           }
-                        : null, // Disabled when offline
+                        : null, // Tombol dinonaktifkan saat offline
                     icon: const Icon(Icons.add),
-                    label: const Text('Add Product'),
+                    label: const Text('Tambah Produk'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -249,9 +254,9 @@ class _ManageProductPageState extends State<ManageProductPage> {
                               const CategoryFormPage(),
                             );
                           }
-                        : null, // Disabled when offline
+                        : null, // Tombol dinonaktifkan saat offline
                     icon: const Icon(Icons.add),
-                    label: const Text('Add Category'),
+                    label: const Text('Tambah Kategori'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),

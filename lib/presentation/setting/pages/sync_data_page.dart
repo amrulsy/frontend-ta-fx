@@ -33,27 +33,27 @@ class _SyncDataPageState extends State<SyncDataPage> {
           },
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
         ),
-        title: const Text('Sync Data'),
+        title: const Text('Sinkronkan Data'),
         centerTitle: true,
       ),
-      //textfield untuk input server key
       body: ListView(
         padding: const EdgeInsets.all(20.0),
         children: [
-          //button sync data product
+          // Tombol sinkronisasi data produk dari server ke local database
           BlocConsumer<ProductBloc, ProductState>(
             listener: (context, state) {
               state.maybeMap(
                 orElse: () {},
                 success: (successState) async {
-                  // Use smart sync instead of delete-all-insert-all
+                  // Gunakan smart sync untuk menghindari delete semua data lalu insert ulang
+                  // Smart sync hanya update data yang berubah
                   await ProductLocalDatasource.instance.syncProducts(
                     successState.products.toList(),
                   );
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       backgroundColor: AppColors.primary,
-                      content: Text('Sync data product success'),
+                      content: Text('Sinkronisasi data produk berhasil'),
                     ),
                   );
                 },
@@ -64,7 +64,7 @@ class _SyncDataPageState extends State<SyncDataPage> {
                 orElse: () {
                   return ElevatedButton(
                     onPressed: () async {
-                      // Check connectivity
+                      // Cek koneksi internet sebelum melakukan sinkronisasi
                       final isConnected = await ConnectivityHelper()
                           .isConnected();
                       if (!isConnected) {
@@ -72,18 +72,19 @@ class _SyncDataPageState extends State<SyncDataPage> {
                           const SnackBar(
                             backgroundColor: Colors.orange,
                             content: Text(
-                              'No internet connection. Please connect to sync data.',
+                              'Tidak ada koneksi internet. Silakan hubungkan untuk sinkronisasi data.',
                             ),
                           ),
                         );
                         return;
                       }
 
+                      // Trigger event untuk fetch data produk dari server
                       context.read<ProductBloc>().add(
                         const ProductEvent.fetch(),
                       );
                     },
-                    child: const Text('Sync Data Product'),
+                    child: const Text('Sinkronkan Data Produk'),
                   );
                 },
                 loading: () {
@@ -93,7 +94,7 @@ class _SyncDataPageState extends State<SyncDataPage> {
             },
           ),
           const SpaceHeight(20),
-          //button sync data order
+          // Tombol sinkronisasi data pesanan lokal ke server
           BlocConsumer<SyncOrderBloc, SyncOrderState>(
             listener: (context, state) {
               state.maybeMap(
@@ -102,7 +103,7 @@ class _SyncDataPageState extends State<SyncDataPage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       backgroundColor: AppColors.primary,
-                      content: Text('Sync data orders success'),
+                      content: Text('Sinkronisasi data pesanan berhasil'),
                     ),
                   );
                 },
@@ -121,7 +122,7 @@ class _SyncDataPageState extends State<SyncDataPage> {
                 orElse: () {
                   return ElevatedButton(
                     onPressed: () async {
-                      // Check connectivity
+                      // Cek koneksi internet sebelum mengirim data
                       final isConnected = await ConnectivityHelper()
                           .isConnected();
                       if (!isConnected) {
@@ -129,18 +130,19 @@ class _SyncDataPageState extends State<SyncDataPage> {
                           const SnackBar(
                             backgroundColor: Colors.orange,
                             content: Text(
-                              'No internet connection. Please connect to sync data.',
+                              'Tidak ada koneksi internet. Silakan hubungkan untuk sinkronisasi data.',
                             ),
                           ),
                         );
                         return;
                       }
 
+                      // Trigger event untuk mengirim data pesanan lokal ke server
                       context.read<SyncOrderBloc>().add(
                         const SyncOrderEvent.sendOrder(),
                       );
                     },
-                    child: const Text('Sync Data Orders'),
+                    child: const Text('Sinkronkan Data Pesanan'),
                   );
                 },
                 loading: () {
@@ -150,16 +152,19 @@ class _SyncDataPageState extends State<SyncDataPage> {
             },
           ),
           const SpaceHeight(20),
-          //button sync categories
+          // Tombol sinkronisasi data kategori dari server ke local database
           BlocConsumer<CategoryBloc, CategoryState>(
             listener: (context, state) {
               state.maybeMap(
                 orElse: () {},
                 loaded: (data) async {
+                  // Hapus semua kategori lokal terlebih dahulu
                   await ProductLocalDatasource.instance.removeAllCategories();
+                  // Insert kategori baru dari server
                   await ProductLocalDatasource.instance.insertAllCategories(
                     data.categories,
                   );
+                  // Refresh kategori dari local database
                   context.read<CategoryBloc>().add(
                     const CategoryEvent.getCategoriesLocal(),
                   );
@@ -167,7 +172,7 @@ class _SyncDataPageState extends State<SyncDataPage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       backgroundColor: AppColors.primary,
-                      content: Text('Sync data categories success'),
+                      content: Text('Sinkronisasi data kategori berhasil'),
                     ),
                   );
                 },
@@ -178,7 +183,7 @@ class _SyncDataPageState extends State<SyncDataPage> {
                 orElse: () {
                   return ElevatedButton(
                     onPressed: () async {
-                      // Check connectivity
+                      // Cek koneksi internet sebelum melakukan sinkronisasi
                       final isConnected = await ConnectivityHelper()
                           .isConnected();
                       if (!isConnected) {
@@ -186,18 +191,19 @@ class _SyncDataPageState extends State<SyncDataPage> {
                           const SnackBar(
                             backgroundColor: Colors.orange,
                             content: Text(
-                              'No internet connection. Please connect to sync data.',
+                              'Tidak ada koneksi internet. Silakan hubungkan untuk sinkronisasi data.',
                             ),
                           ),
                         );
                         return;
                       }
 
+                      // Trigger event untuk fetch data kategori dari server
                       context.read<CategoryBloc>().add(
                         const CategoryEvent.getCategories(),
                       );
                     },
-                    child: const Text('Sync Data Categories'),
+                    child: const Text('Sinkronkan Data Kategori'),
                   );
                 },
                 loading: () {
