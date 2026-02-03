@@ -241,6 +241,7 @@ class _ReportPageState extends State<ReportPage> {
                         Row(
                           children: [
                             Text(
+                              // ignore: unnecessary_null_comparison
                               selectedStartDate == null
                                   ? ''
                                   : DateFormat(
@@ -263,6 +264,7 @@ class _ReportPageState extends State<ReportPage> {
                         Row(
                           children: [
                             Text(
+                              // ignore: unnecessary_null_comparison
                               selectedEndDate == null
                                   ? ''
                                   : DateFormat(
