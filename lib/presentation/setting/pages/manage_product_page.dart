@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:project_ta/core/utils/connectivity_helper.dart';
 import 'package:project_ta/presentation/product/pages/product_list_page.dart';
 import 'package:project_ta/presentation/category/pages/category_list_page.dart';
-import 'package:project_ta/presentation/management/pages/management_page.dart';
 import 'package:project_ta/presentation/product/pages/product_form_page.dart';
 import 'package:project_ta/presentation/category/pages/category_form_page.dart';
 

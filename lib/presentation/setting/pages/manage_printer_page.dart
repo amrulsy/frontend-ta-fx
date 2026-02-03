@@ -49,20 +49,11 @@ class _ManagePrinterPageState extends State<ManagePrinterPage> {
   }
 
   Future<void> initPlatformState() async {
-    String platformVersion;
-    int porcentbatery = 0;
-
-    try {
-      platformVersion = await PrintBluetoothThermal.platformVersion;
-
-      porcentbatery = await PrintBluetoothThermal.batteryLevel;
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
+    try {} on PlatformException {
+      // Failed to get battery level
     }
 
     if (!mounted) return;
-
-    final bool result = await PrintBluetoothThermal.bluetoothEnabled;
   }
 
   Future<void> getBluetoots() async {
@@ -90,17 +81,29 @@ class _ManagePrinterPageState extends State<ManagePrinterPage> {
     setState(() {
       connected = false;
     });
-    final bool result =
-        await PrintBluetoothThermal.connect(macPrinterAddress: mac);
-
-    connected = true;
-    AuthLocalDatasource().savePrinter(mac);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Printer connected with Name $mac'),
-        backgroundColor: AppColors.primary,
-      ),
+    final bool result = await PrintBluetoothThermal.connect(
+      macPrinterAddress: mac,
     );
+
+    if (result) {
+      setState(() {
+        connected = true;
+      });
+      AuthLocalDatasource().savePrinter(mac);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Printer connected with Name $mac'),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to connect to printer'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> disconnect() async {
@@ -116,10 +119,11 @@ class _ManagePrinterPageState extends State<ManagePrinterPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-            onPressed: () {
-              context.pop();
-            },
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.white)),
+          onPressed: () {
+            context.pop();
+          },
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+        ),
         title: const Text('Printer Management'),
         centerTitle: true,
       ),
@@ -158,14 +162,8 @@ class _ManagePrinterPageState extends State<ManagePrinterPage> {
               DropdownButton<String>(
                 value: optionprinttype,
                 items: const [
-                  DropdownMenuItem(
-                    value: '58mm',
-                    child: Text('58mm'),
-                  ),
-                  DropdownMenuItem(
-                    value: '80mm',
-                    child: Text('80mm'),
-                  ),
+                  DropdownMenuItem(value: '58mm', child: Text('58mm')),
+                  DropdownMenuItem(value: '80mm', child: Text('80mm')),
                 ],
                 onChanged: (String? value) async {
                   await AuthLocalDatasource().saveSizePrinter(value!);
