@@ -44,6 +44,7 @@ class _ReportPageState extends State<ReportPage> {
   List<ProductSales> sortedProductSales = []; // For displaying sorted data
   Summary? summary;
   bool isOffline = false;
+  String? selectedSortType; // Track selected sort option
 
   @override
   void initState() {
@@ -161,7 +162,7 @@ class _ReportPageState extends State<ReportPage> {
           },
         ),
         title: const Text(
-          "Report",
+          "Laporan",
           style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -203,14 +204,14 @@ class _ReportPageState extends State<ReportPage> {
                   const Icon(Icons.wifi_off, size: 80, color: Colors.orange),
                   const SizedBox(height: 24),
                   const Text(
-                    'No Internet Connection',
+                    'Tidak Ada Koneksi Internet',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 32),
                     child: Text(
-                      'Please connect to the internet to load report data.',
+                      'Silakan sambungkan ke internet untuk memuat data laporan.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.grey),
                     ),
@@ -219,7 +220,7 @@ class _ReportPageState extends State<ReportPage> {
                   ElevatedButton.icon(
                     onPressed: _checkConnectivityAndLoadData,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Try Again'),
+                    label: const Text('Coba Lagi'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
@@ -296,7 +297,7 @@ class _ReportPageState extends State<ReportPage> {
                                   const SnackBar(
                                     backgroundColor: Colors.orange,
                                     content: Text(
-                                      'No internet connection. Please connect to load report data.',
+                                      'Tidak ada koneksi internet. Silakan sambungkan untuk memuat data laporan.',
                                     ),
                                   ),
                                 );
@@ -358,7 +359,7 @@ class _ReportPageState extends State<ReportPage> {
                       child: Column(
                         children: [
                           const Text(
-                            'Summary Report',
+                            'Ringkasan Laporan',
                             style: TextStyle(
                               color: AppColors.primary,
                               fontSize: 16.0,
@@ -379,7 +380,7 @@ class _ReportPageState extends State<ReportPage> {
                                   return Column(
                                     children: [
                                       buildPrice(
-                                        'Total Revenue',
+                                        'Total Pendapatan',
                                         data.data.totalRevenue.toString(),
                                       ),
                                       const SpaceHeight(8),
@@ -388,13 +389,13 @@ class _ReportPageState extends State<ReportPage> {
                                             MainAxisAlignment.spaceBetween,
                                         children: [
                                           const Text(
-                                            "Sold Items",
+                                            "Item Terjual",
                                             style: TextStyle(
                                               color: AppColors.primary,
                                             ),
                                           ),
                                           Text(
-                                            "${data.data.totalSoldQuantity} items",
+                                            "${data.data.totalSoldQuantity} item",
                                             style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                               color: AppColors.primary,
@@ -433,7 +434,7 @@ class _ReportPageState extends State<ReportPage> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text(
-                                'Product Sales',
+                                'Penjualan Produk',
                                 style: TextStyle(
                                   color: AppColors.primary,
                                   fontSize: 16.0,
@@ -449,31 +450,51 @@ class _ReportPageState extends State<ReportPage> {
                                       if (data.data.isEmpty)
                                         return const SizedBox();
                                       return DropdownButton<String>(
-                                        hint: const Text('Sort by'),
+                                        value: selectedSortType,
+                                        hint: const Text('Urutkan'),
+                                        isExpanded: false,
                                         items: const [
                                           DropdownMenuItem(
                                             value: 'quantity_desc',
-                                            child: Text('Qty: High to Low'),
+                                            child: Text(
+                                              'Jml: Tinggi → Rendah',
+                                              style: TextStyle(fontSize: 12),
+                                            ),
                                           ),
                                           DropdownMenuItem(
                                             value: 'quantity_asc',
-                                            child: Text('Qty: Low to High'),
+                                            child: Text(
+                                              'Jml: Rendah → Tinggi',
+                                              style: TextStyle(fontSize: 12),
+                                            ),
                                           ),
                                           DropdownMenuItem(
                                             value: 'revenue_desc',
-                                            child: Text('Revenue: High to Low'),
+                                            child: Text(
+                                              'Pndptn: Tinggi → Rendah',
+                                              style: TextStyle(fontSize: 12),
+                                            ),
                                           ),
                                           DropdownMenuItem(
                                             value: 'revenue_asc',
-                                            child: Text('Revenue: Low to High'),
+                                            child: Text(
+                                              'Pndptn: Rendah → Tinggi',
+                                              style: TextStyle(fontSize: 12),
+                                            ),
                                           ),
                                           DropdownMenuItem(
                                             value: 'name_asc',
-                                            child: Text('Name: A-Z'),
+                                            child: Text(
+                                              'Nama: A-Z',
+                                              style: TextStyle(fontSize: 12),
+                                            ),
                                           ),
                                         ],
                                         onChanged: (value) {
                                           if (value != null) {
+                                            setState(() {
+                                              selectedSortType = value;
+                                            });
                                             sortProductSales(value, data.data);
                                           }
                                         },
@@ -503,7 +524,7 @@ class _ReportPageState extends State<ReportPage> {
                                       ),
                                       const SpaceHeight(16),
                                       Text(
-                                        'Failed to load product sales',
+                                        'Gagal memuat data penjualan produk',
                                         style: const TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
@@ -527,7 +548,7 @@ class _ReportPageState extends State<ReportPage> {
                                             ),
                                           );
                                         },
-                                        label: 'Retry',
+                                        label: 'Coba Lagi',
                                       ),
                                     ],
                                   );
@@ -543,7 +564,7 @@ class _ReportPageState extends State<ReportPage> {
                                         ),
                                         const SpaceHeight(16),
                                         const Text(
-                                          'No product sales data',
+                                          'Tidak ada data penjualan produk',
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
@@ -552,7 +573,7 @@ class _ReportPageState extends State<ReportPage> {
                                         ),
                                         const SpaceHeight(8),
                                         Text(
-                                          'Try selecting a different date range',
+                                          'Coba pilih rentang tanggal yang berbeda',
                                           style: const TextStyle(
                                             color: AppColors.grey,
                                           ),
@@ -617,7 +638,7 @@ class _ReportPageState extends State<ReportPage> {
                                                 ),
                                                 const SpaceWidth(6),
                                                 const Text(
-                                                  "Summary",
+                                                  "Ringkasan",
                                                   style: TextStyle(
                                                     color: AppColors.primary,
                                                     fontWeight: FontWeight.bold,
@@ -649,7 +670,7 @@ class _ReportPageState extends State<ReportPage> {
                                                     child: Column(
                                                       children: [
                                                         const Text(
-                                                          "Items",
+                                                          "Item",
                                                           style: TextStyle(
                                                             color:
                                                                 AppColors.grey,
@@ -691,7 +712,7 @@ class _ReportPageState extends State<ReportPage> {
                                                     child: Column(
                                                       children: [
                                                         const Text(
-                                                          "Total Revenue",
+                                                          "Total Pendapatan",
                                                           style: TextStyle(
                                                             color:
                                                                 AppColors.grey,
@@ -801,9 +822,6 @@ class _ReportPageState extends State<ReportPage> {
   }
 
   Widget tableProductSales(ProductSalesResponseModel data, int totalRevenue) {
-    const double itemHeight = 90.0;
-    final double tableHeight = itemHeight * data.data.length;
-
     // Calculate responsive widths based on screen size
     final screenWidth = MediaQuery.of(context).size.width;
     final availableWidth = screenWidth - 32; // Subtract padding
@@ -822,8 +840,10 @@ class _ReportPageState extends State<ReportPage> {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: SizedBox(
-        height: tableHeight + 56, // Header height only, reduced spacing
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxHeight: 400, // Limit max height to prevent large gaps
+        ),
         child: HorizontalDataTable(
           leftHandSideColumnWidth: colNo,
           rightHandSideColumnWidth: rightHandSideWidth,
@@ -831,9 +851,9 @@ class _ReportPageState extends State<ReportPage> {
           headerWidgets: [
             _getTitleItemWidget('No', colNo),
             _getTitleItemWidget('ID', colId),
-            _getTitleItemWidget('Product', colProduct),
-            _getTitleItemWidget('Price', colPrice),
-            _getTitleItemWidget('Qty', colQty),
+            _getTitleItemWidget('Produk', colProduct),
+            _getTitleItemWidget('Harga', colPrice),
+            _getTitleItemWidget('Jml', colQty),
             _getTitleItemWidget('Total', colTotal),
             _getTitleItemWidget('%', colPercent),
           ],
